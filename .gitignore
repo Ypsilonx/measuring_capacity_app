@@ -39,3 +39,6 @@ Thumbs.db
 # Application specific
 data/
 backups/
+
+# AI agents
+GEMINI.md
