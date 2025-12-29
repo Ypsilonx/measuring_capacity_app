@@ -28,13 +28,23 @@ class UserSelectionDialog(ctk.CTkToplevel):
         
         # Nastavení okna
         self.title("Výběr uživatele")
-        self.geometry("400x500")
+        
+        # Responzivní velikost - větší aby bylo vidět celý formulář
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        if screen_height < 900:
+            width, height = 450, min(screen_height - 80, 700)
+        else:
+            width, height = 550, 750
         
         # Centrování okna
-        self.update_idletasks()
-        x = (self.winfo_screenwidth() // 2) - (400 // 2)
-        y = (self.winfo_screenheight() // 2) - (500 // 2)
-        self.geometry(f"+{x}+{y}")
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.geometry(f"{width}x{height}+{x}+{y}")
+        
+        # Minimální velikost
+        self.minsize(450, 650)
         
         # Modální dialog
         if parent:

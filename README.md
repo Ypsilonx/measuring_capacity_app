@@ -55,7 +55,7 @@ measuring_capacity_app/
 **User** - uživatelé
 ```
 - id (PK)
-- username
+- username (unique)
 - full_name
 - created_at
 ```
@@ -71,12 +71,16 @@ measuring_capacity_app/
 - projekt_id (FK → Projekt)
 - tma_cislo
 - nazev_testu
-- obsah_mereni_id (FK → ObsahMereni)
+- obsah_mereni: ENUM ('FREEPLAY', 'FUNCTION', 'OSTATNÍ')
 - pocet_ks
 - duvod_mereni_id (FK → DuvodMereni)
 
+-- ROUTINE fields (nullable) --
+- routine_type: ENUM ('Oběd', 'Káva', 'Kouření', 'WC', 'Přestávka', 'Meeting', 'Porada', 'Programování', 'Vlastní')
+- routine_duration_minutes (plánovaná délka)
+
 - status: ENUM ('ACTIVE', 'COMPLETED')
-- created_by (FK → User)
+- created_by_id (FK → User)
 - created_at
 - updated_at
 ```
@@ -101,29 +105,40 @@ measuring_capacity_app/
 **Zadavatel**
 ```
 - id (PK)
-- name
+- name (unique)
 - email
 ```
 
 **Projekt**
 ```
 - id (PK)
-- code
+- code (unique)
 - name
-- zadavatel_id (FK)
 ```
 
 **DuvodMereni**
 ```
 - id (PK)
-- name (před DT, během DT, po DT, přeměření...)
+- name (unique) (před DT, během DT, po DT, přeměření...)
 ```
 
-**ObsahMereni**
-```
-- id (PK)
-- name
-```
+### ENUMs
+
+**ObsahMereniType** - typ obsahu měření
+- FREEPLAY
+- FUNCTION
+- OSTATNÍ
+
+**RoutineType** - typy rutinních aktivit
+- OBED (30 min)
+- KAVA (10 min)
+- KOURENI (10 min)
+- WC (5 min)
+- PRESTAVKA (15 min)
+- MEETING (30 min)
+- PORADA (60 min)
+- PROGRAMOVANI (120 min)
+- VLASTNI (custom)
 
 ### Klíčové koncepty
 
@@ -175,13 +190,17 @@ python src/main.py
 ```
 
 ## Funkce
-- ✅ Tracking času s Start/Stop pro aktivity
+- ✅ Multi-user podpora s výběrem při startu
+- ✅ Plánovací okno se 2 panely (PROJECT_TASKS + ROUTINES)
+- ✅ Tracking času s Start/Pauza/Stop pro PROJECT_TASK aktivity
 - ✅ Fázové měření (Příprava, Měření, Úklid)
-- ✅ Přerušení a pokračování úkolů napříč dny
-- ✅ Validace/invalidace časových záznamů
-- ✅ ROUTINE vs PROJECT_TASK aktivity
-- ✅ Číselníky pro konzistentní data (projekty, zadavatelé...)
-- ✅ Historie všech měření
-- ✅ Dashboard s grafy a filtrováním
-- ✅ Predikce času na základě historických dat
-- ✅ Podpora více uživatelů
+- ✅ PAUZA s možností zaznamenání ROUTINE aktivit
+- ✅ Validace/invalidace časových záznamů (STOP-OK/STOP-NOK s důvodem)
+- ✅ 9 typů ROUTINE aktivit s přednastavenými časy
+- ✅ TaskCard s rámečky a rozbalovacím seznamem sessions (včetně invalidních)
+- ✅ Responzivní design pro různá rozlišení (notebooky vs velké monitory)
+- ✅ Tracking dialog se 2 sloupci (levý: ovládání, pravý: ROUTINES)
+- ✅ Historie všech měření s rozlišením validní/invalidní
+- 🔄 Dashboard s grafy a filtrováním (plánováno)
+- 🔄 Predikce času na základě historických dat (plánováno)
+- 🔄 Statistiky a analýzy (plánováno)

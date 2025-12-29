@@ -16,24 +16,31 @@
 - Vždy: `.\venv\Scripts\Activate.ps1; python src/main.py`
 
 ### 4. Databáze
-- PostgreSQL + SQLAlchemy ORM
+- SQLite (výchozí) + SQLAlchemy ORM
+- Možnost migrace na PostgreSQL
 - Žádné ruční SQL queries
 - Konfigurace v `.env`
 
 ### 5. Struktura dat
-- Hierarchická: Task → Many TimeSessions
+- Hierarchická: Activity → Many TimeSessions
 - Jeden úkol může mít desítky časových záznamů
-- Podpora přerušení a pokračování úkolů
+- Podpora PAUZA s elapsed time tracking
+- ENUM typy pro ObsahMereni a RoutineType
 
 ### 6. GUI
-- CustomTkinter
-- Grafy: matplotlib + plotly
+- CustomTkinter (dark mode)
+- Responzivní design pro různá rozlišení
+- 2-sloupcový layout (PROJECT_TASKS 80% + ROUTINES 20%)
 - Desktop aplikace (ne web, ne mobile)
 
 ## Aktuální stav projektu
 - [x] KROK 0: Základní setup dokončen
-- [ ] KROK 1: Návrh DB schématu
-- [ ] Instalace závislostí ve venv
+- [x] KROK 1: Návrh DB schématu
+- [x] KROK 2: MVP aplikace funkční
+- [x] Multi-user podpora
+- [x] ROUTINES support
+- [x] Responzivní design
+- [ ] Statistiky a predikce
 
 ## Poznámky
 - Uživatel chce minimalistický přístup - nedělat nic navíc

@@ -154,13 +154,3 @@ class DuvodMereni(Base):
 
     def __repr__(self):
         return f"<DuvodMereni(id={self.id}, name='{self.name}')>"
-
-class ObsahMereni(Base):
-    __tablename__ = 'obsahy_mereni'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(200), unique=True, nullable=False)
-
-    activities = relationship('Activity', back_populates='obsah_mereni')
-
-    def __repr__(self):
-        return f"<ObsahMereni(id={self.id}, name='{self.name}')>"

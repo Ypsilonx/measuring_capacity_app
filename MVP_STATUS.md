@@ -7,30 +7,48 @@
 - ✅ SQLite databáze
 - ✅ CRUD operace pro všechny entity
 - ✅ Podpora pro:
-  - PROJECT_TASK aktivity
+  - PROJECT_TASK aktivity s ENUM ObsahMereniType
+  - ROUTINE aktivity s ENUM RoutineType (9 typů)
   - Fázové měření (Příprava/Měření/Úklid)
   - Více TimeSession na aktivitu
-  - Validace session (`is_valid` flag)
-  - Číselníky (Zadavatelé, Projekty, Obsahy, Důvody)
+  - Validace session (`is_valid` flag) s důvodem invalidace
+  - Číselníky (Zadavatelé, Projekty, Důvody)
+  - Multi-user podpora
+  - Oddělené Zadavatel a Projekt entity
 
 **Soubory:**
-- [src/database/models.py](src/database/models.py) - DB modely
+- [src/database/models.py](src/database/models.py) - DB modely s ENUMs
 - [src/database/database.py](src/database/database.py) - Engine & session
 - [src/database/crud.py](src/database/crud.py) - CRUD operace
 
-### **2. GUI vrstva** (MVP kompletní)
-- ✅ CustomTkinter desktop aplikace
-- ✅ 2-panelový layout (seznam + tracking)
-- ✅ Real-time časovač
-- ✅ Formulář pro novou aktivitu
-- ✅ Seznam aktivních úkolů s detaily
-- ✅ Start/Stop tracking s výběrem fáze
+### **2. GUI vrstva** (MVP kompletní + vylepšení)
+- ✅ CustomTkinter desktop aplikace (dark mode)
+- ✅ UserSelectionDialog - výběr uživatele při startu
+- ✅ PlannerWindow - hlavní okno se 2 panely:
+  - PROJECT_TASKS panel (80% šířky) s TaskCard widgety
+  - ROUTINES panel (20% šířky) s 9 quick-action tlačítky
+- ✅ TaskCard s rámečky a rozbalovacím seznamem sessions:
+  - Zobrazení validních i invalidních sessions
+  - Ikony ✅/❌ podle validity
+  - Důvod invalidace v závorce
+  - Poslední fáze v souhrnu
+- ✅ TrackingDialog - široké okno se 2 sloupci:
+  - Levý sloupec: info, fáze, časovač, ovládání
+  - Pravý sloupec: ROUTINES buttons (9 typů)
+  - PAUZA s elapsed time tracking (čas skutečně stojí)
+  - STOP-OK/STOP-NOK s InputDialog pro důvod
+- ✅ RoutineDialog - vytvoření ROUTINE s editací času
+- ✅ NewProjectTaskDialog - formulář pro nový PROJECT_TASK
+- ✅ InputDialog - jednoduchý vstup textu
+- ✅ Responzivní design pro různá rozlišení (notebooky i velké monitory)
 
 **Soubory:**
-- [src/gui/main_window.py](src/gui/main_window.py) - Hlavní okno
-- [src/gui/tracking_panel.py](src/gui/tracking_panel.py) - Tracking panel
-- [src/gui/activity_list.py](src/gui/activity_list.py) - Seznam aktivit
-- [src/gui/new_activity_dialog.py](src/gui/new_activity_dialog.py) - Dialog pro nový úkol
+- [src/gui/user_selection_dialog.py](src/gui/user_selection_dialog.py)
+- [src/gui/planner_window.py](src/gui/planner_window.py)
+- [src/gui/tracking_dialog.py](src/gui/tracking_dialog.py)
+- [src/gui/routine_dialog.py](src/gui/routine_dialog.py)
+- [src/gui/new_project_task_dialog.py](src/gui/new_project_task_dialog.py)
+- [src/gui/input_dialog.py](src/gui/input_dialog.py)
 
 ### **3. Pomocné scripty**
 - ✅ [scripts/test_database.py](scripts/test_database.py) - Test DB bez GUI
@@ -60,37 +78,42 @@
 5. **Další den:** Úkol je stále v seznamu → pokračuj
 
 ### **Funguje:**
+- ✅ Multi-user - výběr uživatele při startu
 - ✅ Jeden úkol = mnoho session (i ve stejné fázi)
-- ✅ Přerušení a pokračování přes víc dní
+- ✅ PAUZA s možností zaznamenání ROUTINE
 - ✅ Změna fází kdykoliv
-- ✅ Živý časovač s real-time zobrazením
+- ✅ Živý časovač s real-time zobrazením (při PAUZA skutečně stojí)
 - ✅ Sumarizace validního času
+- ✅ Zobrazení validních i invalidních sessions v rozbalovacím seznamu
+- ✅ STOP-NOK s důvodem invalidace
+- ✅ 9 typů ROUTINE aktivit s přednastavenými časy
+- ✅ Responzivní design pro různá rozlišení
 - ✅ Aktivní úkoly zůstávají v seznamu
 
 ---
 
 ## ❌ CO JEŠTĚ CHYBÍ (Příští iterace)
 
-### **Priorita 1 - Validace a historie:**
-- ❌ Zobrazení všech session pro aktivitu
-- ❌ Invalidace session (označení jako chybný) + důvod
-- ❌ Editace poznámek k existující session
-
-### **Priorita 2 - Analytika:**
+### **Priorita 1 - Statistiky a analýzy:**
+- ❌ Dashboard s grafy
 - ❌ Graf: rozdělení času podle fází
 - ❌ Statistiky pro úkol (průměrná session, nejdelší/nejkratší)
+- ❌ Denní/týdenní přehledy
 - ❌ Predikce času na základě historie
 
-### **Priorita 3 - Plánování:**
-- ❌ Plánování dne (morning planning)
-- ❌ ROUTINE aktivity (oběd, pauzy...)
-- ❌ Denní přehled (co se stalo dnes)
-
-### **Priorita 4 - Kvalita:**
-- ❌ Error handling a validace
-- ❌ Potvrzovací dialogy
+### **Priorita 2 - Pokročilé funkce:**
+- ❌ Editace poznámek k existující session
+- ❌ Editace aktivit
+- ❌ Mazání sessions/aktivit
 - ❌ Export dat (CSV, Excel)
+- ❌ Filtrování a vyhledávání
+
+### **Priorita 3 - Kvalita:**
+- ❌ Error handling a validace formulářů
+- ❌ Potvrzovací dialogy pro destruktivní akce
 - ❌ Testy (pytest)
+- ❌ Logging
+- ❌ Migrace na PostgreSQL (volitelné)
 
 ---
 

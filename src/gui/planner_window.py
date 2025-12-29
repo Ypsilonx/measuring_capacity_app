@@ -32,7 +32,29 @@ class PlannerWindow:
         """
         self.root = ctk.CTk()
         self.root.title("Measuring Capacity App - Plánovač")
-        self.root.geometry("1400x800")
+        
+        # Responzivní velikost podle obrazovky
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # 85% šířky a 80% výšky obrazovky
+        window_width = int(screen_width * 0.85)
+        window_height = int(screen_height * 0.80)
+        
+        # Minimální rozměry pro malé obrazovky
+        window_width = max(window_width, 1000)
+        window_height = max(window_height, 600)
+        
+        # Maximální rozměry pro velké obrazovky
+        window_width = min(window_width, 1920)
+        window_height = min(window_height, 1080)
+        
+        # Centrování
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self.root.minsize(1000, 600)
         
         # Databázová session
         self.db = SessionLocal()
@@ -53,8 +75,8 @@ class PlannerWindow:
         """Vytvoří všechny GUI komponenty."""
         
         # Hlavní layout
-        self.root.grid_columnconfigure(0, weight=2)  # Levý panel - širší
-        self.root.grid_columnconfigure(1, weight=3)  # Pravý panel
+        self.root.grid_columnconfigure(0, weight=4)  # Levý panel - PROJECT_TASKS (80%)
+        self.root.grid_columnconfigure(1, weight=1)  # Pravý panel - ROUTINES (20%)
         self.root.grid_rowconfigure(0, weight=1)
         
         # === LEVÝ PANEL - Nedokončené úkoly ===
@@ -146,19 +168,19 @@ class PlannerWindow:
             {"emoji": "✏️", "name": "Vlastní...", "type": models.RoutineType.VLASTNI, "duration": 30},
         ]
         
-        # Vytvoř tlačítka v gridu
+        # Vytvoř tlačítka v gridu - menší a kompaktnější
         row, col = 0, 0
         for config in self.routines_config:
             btn = ctk.CTkButton(
                 routines_grid,
-                text=f"{config['emoji']}\n{config['name']}\n({config['duration']} min)",
+                text=f"{config['emoji']}\n{config['name']}\n{config['duration']}min",
                 command=lambda c=config: self._quick_routine(c),
-                height=100,
-                font=ctk.CTkFont(size=14),
+                height=70,
+                font=ctk.CTkFont(size=11),
                 fg_color=("gray75", "gray25"),
                 hover_color=("gray65", "gray35")
             )
-            btn.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+            btn.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
             
             col += 1
             if col > 2:
@@ -251,7 +273,7 @@ class PlannerWindow:
 
 
 class TaskCard(ctk.CTkFrame):
-    """Karta zobrazující jeden nedokončený úkol."""
+    """Karta zobrazující jeden nedokončený úkol - s ráme čkem a rozbalovacími sessions."""
     
     def __init__(self, parent, activity, planner):
         """
@@ -262,10 +284,18 @@ class TaskCard(ctk.CTkFrame):
             activity: Activity objekt
             planner: Reference na PlannerWindow
         """
-        super().__init__(parent, fg_color=("gray85", "gray20"))
+        # Výraznější rámeček
+        super().__init__(
+            parent, 
+            fg_color=("gray90", "gray15"),
+            border_width=2,
+            border_color=("gray60", "gray40"),
+            corner_radius=8
+        )
         
         self.activity = activity
         self.planner = planner
+        self.sessions_expanded = False
         
         self._create_widgets()
     
@@ -282,39 +312,71 @@ class TaskCard(ctk.CTkFrame):
             font=ctk.CTkFont(size=14, weight="bold"),
             anchor="w"
         )
-        tma_label.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 5))
+        tma_label.grid(row=0, column=0, sticky="w", padx=12, pady=(12, 5))
         
         # Název testu
         if self.activity.nazev_testu:
             test_label = ctk.CTkLabel(
                 self,
                 text=f"📝 {self.activity.nazev_testu}",
-                font=ctk.CTkFont(size=12),
-                anchor="w"
+                font=ctk.CTkFont(size=11),
+                anchor="w",
+                wraplength=350
             )
-            test_label.grid(row=1, column=0, sticky="w", padx=10, pady=2)
+            test_label.grid(row=1, column=0, sticky="w", padx=12, pady=2)
         
-        # Spočítej celkový validní čas
-        valid_sessions = crud.get_valid_time_sessions_for_activity(
+        # Načti VŠECHNY sessions (i invalidní)
+        all_sessions = crud.get_time_sessions_for_activity(
             self.planner.db,
             self.activity.id
         )
+        
+        # Spočítej jen validní čas
+        valid_sessions = [s for s in all_sessions if s.is_valid]
         total_time = sum(s.duration_minutes or 0 for s in valid_sessions)
         hours = total_time // 60
         minutes = total_time % 60
         
+        # Poslední fáze (z validních)
+        last_phase = ""
+        if valid_sessions:
+            last_session = valid_sessions[-1]
+            if last_session.phase:
+                last_phase = f" | Poslední: {last_session.phase.value}"
+        
+        # Počet invalidních sessions
+        invalid_count = len([s for s in all_sessions if not s.is_valid])
+        invalid_text = f" ({invalid_count} invalid)" if invalid_count > 0 else ""
+        
         time_label = ctk.CTkLabel(
             self,
-            text=f"⏱️ Čas: {hours}h {minutes}min ({len(valid_sessions)} session)",
-            font=ctk.CTkFont(size=11),
+            text=f"⏱️ Celkem: {hours}h {minutes}min ({len(valid_sessions)} sessions{invalid_text}){last_phase}",
+            font=ctk.CTkFont(size=10),
             text_color=("green", "lightgreen"),
             anchor="w"
         )
-        time_label.grid(row=2, column=0, sticky="w", padx=10, pady=2)
+        time_label.grid(row=2, column=0, sticky="w", padx=12, pady=2)
+        
+        # Tlačítko pro rozbalení sessions (pokud jsou nějaké)
+        if all_sessions:
+            self.sessions_btn = ctk.CTkButton(
+                self,
+                text="▼ Zobrazit sessions",
+                command=self._toggle_sessions,
+                height=25,
+                font=ctk.CTkFont(size=10),
+                fg_color=("gray70", "gray30"),
+                hover_color=("gray60", "gray40")
+            )
+            self.sessions_btn.grid(row=3, column=0, sticky="w", padx=12, pady=(5, 5))
+            
+            # Sessions frame (skrytý)
+            self.sessions_frame = ctk.CTkFrame(self, fg_color=("gray80", "gray25"))
+            self.all_sessions = all_sessions  # Uložit VŠECHNY sessions
         
         # Tlačítka
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=(5, 10))
+        btn_frame.grid(row=5, column=0, sticky="ew", padx=10, pady=(5, 12))
         
         btn_frame.grid_columnconfigure(0, weight=1)
         btn_frame.grid_columnconfigure(1, weight=1)
@@ -323,21 +385,63 @@ class TaskCard(ctk.CTkFrame):
             btn_frame,
             text="🎯 Tracking",
             command=self._on_tracking,
-            height=40,
+            height=38,
+            font=ctk.CTkFont(size=12, weight="bold"),
             fg_color="blue",
             hover_color="darkblue"
         )
-        tracking_btn.grid(row=0, column=0, padx=5, sticky="ew")
+        tracking_btn.grid(row=0, column=0, padx=(0, 5), sticky="ew")
         
         complete_btn = ctk.CTkButton(
             btn_frame,
             text="✅ Dokončit",
             command=self._on_complete,
-            height=40,
+            height=38,
+            font=ctk.CTkFont(size=12, weight="bold"),
             fg_color="green",
             hover_color="darkgreen"
         )
-        complete_btn.grid(row=0, column=1, padx=5, sticky="ew")
+        complete_btn.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+    
+    def _toggle_sessions(self):
+        """Rozbalí/sbalí seznam sessions."""
+        if self.sessions_expanded:
+            # Sbal
+            self.sessions_frame.grid_forget()
+            self.sessions_btn.configure(text="▼ Zobrazit sessions")
+            self.sessions_expanded = False
+        else:
+            # Rozbal
+            self.sessions_frame.grid(row=4, column=0, sticky="ew", padx=12, pady=(0, 8))
+            self.sessions_btn.configure(text="▲ Skrýt sessions")
+            self.sessions_expanded = True
+            
+            # Naplň sessions frame (pokud je prázdný)
+            if not self.sessions_frame.winfo_children():
+                for i, session in enumerate(self.all_sessions):
+                    phase_text = session.phase.value if session.phase else "N/A"
+                    duration = session.duration_minutes or 0
+                    start_time = session.start_time.strftime("%H:%M") if session.start_time else "N/A"
+                    
+                    # Rozlišení validní/invalidní
+                    if session.is_valid:
+                        status_icon = "✅"
+                        text_color = ("green", "lightgreen")
+                    else:
+                        status_icon = "❌"
+                        text_color = ("red", "salmon")
+                        # Přidej důvod invalidace
+                        if session.invalidation_reason:
+                            phase_text += f" ({session.invalidation_reason})"
+                    
+                    session_label = ctk.CTkLabel(
+                        self.sessions_frame,
+                        text=f"  {status_icon} {i+1}. {start_time} - {phase_text} - {duration} min",
+                        font=ctk.CTkFont(size=9),
+                        text_color=text_color,
+                        anchor="w"
+                    )
+                    session_label.pack(anchor="w", padx=8, pady=2)
     
     def _on_tracking(self):
         """Handler pro tlačítko Tracking."""

@@ -52,12 +52,12 @@ def seed_database():
                 zadavatele[data["name"]] = existing
                 print(f"   ℹ️  {data['name']} (existuje)")
         
-        # 3. Vytvoř projekty
+        # 3. Vytvoř projekty (BEZ zadavatele - odpojené)
         print("\n3️⃣  Vytváření projektů...")
         projekty_data = [
-            {"code": "BMW-2024-001", "name": "Série 5 - Testování geometrie", "zadavatel": "BMW"},
-            {"code": "AUDI-2024-015", "name": "A4 - Kontrola rozměrů", "zadavatel": "Audi"},
-            {"code": "SKODA-2024-042", "name": "Octavia - Validace dílů", "zadavatel": "Škoda Auto"},
+            {"code": "BMW-2024-001", "name": "Série 5 - Testování geometrie"},
+            {"code": "AUDI-2024-015", "name": "A4 - Kontrola rozměrů"},
+            {"code": "SKODA-2024-042", "name": "Octavia - Validace dílů"},
         ]
         
         projekty = {}
@@ -68,8 +68,7 @@ def seed_database():
                     db, 
                     models.Projekt,
                     code=data["code"],
-                    name=data["name"],
-                    zadavatel_id=zadavatele[data["zadavatel"]].id
+                    name=data["name"]
                 )
                 projekty[data["code"]] = item
                 print(f"   ✅ {data['code']}")
@@ -77,20 +76,8 @@ def seed_database():
                 projekty[data["code"]] = existing
                 print(f"   ℹ️  {data['code']} (existuje)")
         
-        # 4. Vytvoř obsahy měření
-        print("\n4️⃣  Vytváření obsahů měření...")
-        obsahy_data = ["Geometrie", "Rozměry", "Povrch", "Funkčnost"]
-        
-        obsahy = {}
-        for name in obsahy_data:
-            existing = crud.get_lookup_item_by_name(db, models.ObsahMereni, name)
-            if not existing:
-                item = crud.create_lookup_item(db, models.ObsahMereni, name=name)
-                obsahy[name] = item
-                print(f"   ✅ {name}")
-            else:
-                obsahy[name] = existing
-                print(f"   ℹ️  {name} (existuje)")
+        # 4. ObsahMereni je teď ENUM (ne tabulka) - přeskočit
+        print("\n4️⃣  Obsah měření je ENUM (FREEPLAY, FUNCTION, OSTATNÍ) - skip...")
         
         # 5. Vytvoř důvody měření
         print("\n5️⃣  Vytváření důvodů měření...")
@@ -112,26 +99,29 @@ def seed_database():
         
         activities_data = [
             {
-                "tma_cislo": "TMA-2024-1234",
+                "tma_cislo": "TMA-2025-001",
                 "nazev_testu": "BMW Série 5 - Měření přední kapoty",
+                "zadavatel": "BMW",
                 "projekt": "BMW-2024-001",
-                "obsah": "Geometrie",
+                "obsah": models.ObsahMereniType.FUNCTION,
                 "duvod": "Před DT",
                 "pocet_ks": 15
             },
             {
-                "tma_cislo": "TMA-2024-5678",
+                "tma_cislo": "TMA-2025-002",
                 "nazev_testu": "Audi A4 - Kontrola dveří",
+                "zadavatel": "Audi",
                 "projekt": "AUDI-2024-015",
-                "obsah": "Rozměry",
+                "obsah": models.ObsahMereniType.FREEPLAY,
                 "duvod": "Během DT",
                 "pocet_ks": 8
             },
             {
-                "tma_cislo": "TMA-2024-9012",
+                "tma_cislo": "TMA-2025-003",
                 "nazev_testu": "Škoda Octavia - Validace nárazníku",
+                "zadavatel": "Škoda Auto",
                 "projekt": "SKODA-2024-042",
-                "obsah": "Povrch",
+                "obsah": models.ObsahMereniType.OSTATNI,
                 "duvod": "Přeměření",
                 "pocet_ks": 12
             }
@@ -147,19 +137,18 @@ def seed_database():
                     'type': models.ActivityType.PROJECT_TASK,
                     'tma_cislo': data["tma_cislo"],
                     'nazev_testu': data["nazev_testu"],
-                    'zadavatel_id': projekty[data["projekt"]].zadavatel_id,
+                    'zadavatel_id': zadavatele[data["zadavatel"]].id,
                     'projekt_id': projekty[data["projekt"]].id,
-                    'obsah_mereni_id': obsahy[data["obsah"]].id,
+                    'obsah_mereni': data["obsah"],  # ENUM přímo
                     'duvod_mereni_id': duvody[data["duvod"]].id,
                     'pocet_ks': data["pocet_ks"],
-                    'status': models.ActivityStatus.ACTIVE,
-                    'created_by_id': user.id
+                    'created_by_id': user.id  # Vytvořený uživatel
                 }
                 
                 activity = crud.create_activity(db, activity_data)
-                print(f"   ✅ {data['tma_cislo']} - {data['nazev_testu']}")
+                print(f"   ✅ Vytvořena aktivita: {activity.nazev_testu}")
             else:
-                print(f"   ℹ️  {data['tma_cislo']} (existuje)")
+                print(f"   ⏭️  Aktivita {data['tma_cislo']} již existuje, přeskakuji")
         
         print("\n" + "=" * 60)
         print("✅ DATABÁZE NAPLNĚNA TESTOVACÍMI DATY!")

@@ -1,24 +1,39 @@
 # 🚀 RYCHLÝ START - MVP Aplikace
 
-## ✅ Co je hotové (MVP)
+## ✅ Co je hotové (MVP v2)
 
 **Funkční desktop aplikace** s těmito funkcemi:
 
 ### 📋 **Hlavní funkce:**
-- ✅ **Vytvoření PROJECT_TASK** - formulář s TMA, název testu, projekt, zadavatel...
-- ✅ **Start/Stop tracking** - real-time měření času s živým časovačem
+- ✅ **Multi-user** - výběr uživatele při startu aplikace
+- ✅ **Vytvoření PROJECT_TASK** - formulář s TMA, název testu, projekt, zadavatel, obsah měření (ENUM)
+- ✅ **Start/Pauza/Stop tracking** - real-time měření času s živým časovačem
+- ✅ **PAUZA s ROUTINES** - během pauzy možnost zaznamenat rutinní aktivity (Oběd, Káva, WC...)
 - ✅ **Fázové měření** - výběr fáze (Příprava/Měření/Úklid) před startem
+- ✅ **9 typů ROUTINE aktivit** - Oběd, Káva, Kouření, WC, Přestávka, Meeting, Porada, Programování, Vlastní
+- ✅ **TaskCard s rámečky** - výrazné oddělení úkolů
+- ✅ **Rozbalovací sessions** - zobrazení validních i invalidních sessions s důvody
+- ✅ **STOP-OK/STOP-NOK** - validace nebo invalidace session s důvodem
+- ✅ **Responzivní design** - přizpůsobení notebookům i velkým monitorům
 - ✅ **Seznam aktivních úkolů** - přehled všech ACTIVE aktivit
-- ✅ **Sumarizace času** - zobrazení celkového času a počtu session
+- ✅ **Sumarizace času** - zobrazení celkového času, počtu sessions a invalidních
 - ✅ **Dokončení úkolu** - změna statusu na COMPLETED
 
 ### 🎯 **Workflow:**
-1. Klikni "➕ Nový úkol" → vyplň formulář
-2. Vyber úkol ze seznamu → vyber fázi → klikni "▶️ START"
-3. Živý časovač běží
-4. Klikni "⏹️ STOP" → session se uloží
-5. Opakuj podle potřeby (i další den)
-6. Klikni "✅ Dokončit" když je úkol hotový
+1. **Výběr uživatele** - při startu aplikace vyber nebo vytvoř uživatele
+2. **Hlavní okno** - 2 panely:
+   - Levý (80%): PROJECT_TASKS - seznam nedokončených úkolů
+   - Pravý (20%): ROUTINES - 9 quick-action tlačítek
+3. **Vytvoření úkolu** - klikni "➕ Nový PROJECT_TASK" → vyplň formulář
+4. **Tracking:**
+   - Vyber úkol → klikni "🎯 Tracking"
+   - Vyber fázi → klikni "▶️ START"
+   - Živý časovač běží
+   - **PAUZA:** klikni "⏸️ PAUZA" → čas stojí, můžeš zaznamenat ROUTINE
+   - **Pokračování:** klikni "▶️ POKRAČOVAT" → čas pokračuje
+   - **Konec:** klikni "⏹️ STOP-OK" (validní) nebo "⏹️ STOP-NOK" (nevalidní s důvodem)
+5. **Zobrazení sessions** - klikni "▼ Zobrazit sessions" u úkolu pro detail všech měření
+6. **Dokončení** - klikni "✅ Dokončit" když je úkol hotový
 
 ---
 
@@ -34,11 +49,11 @@ python scripts/seed_database.py
 ```
 
 **Vytvoří:**
+- 1 uživatel (admin)
 - 3 zadavatele (BMW, Audi, Škoda)
 - 3 projekty
-- 4 obsahy měření
 - 5 důvodů měření
-- 3 testovací úkoly (PROJECT_TASK)
+- 3 testovací úkoly (PROJECT_TASK) s ENUM ObsahMereni
 
 ### 2️⃣ **Spuštění aplikace**
 ```powershell
