@@ -32,6 +32,22 @@ class TimeSessionPhase(enum.Enum):
     MERENI = 'Měření'
     UKLID = 'Úklid'
 
+class ObsahMereniType(enum.Enum):
+    FREEPLAY = 'FREEPLAY'
+    FUNCTION = 'FUNCTION'
+    OSTATNI = 'OSTATNÍ'
+
+class RoutineType(enum.Enum):
+    OBED = 'Oběd'
+    KAVA = 'Káva'
+    KOURENI = 'Kouření'
+    WC = 'WC'
+    PRESTAVKA = 'Přestávka'
+    MEETING = 'Meeting'
+    PORADA = 'Porada'
+    PROGRAMOVANI = 'Programování'
+    VLASTNI = 'Vlastní'
+
 # --- Main Tables ---
 
 class User(Base):
@@ -58,9 +74,14 @@ class Activity(Base):
     projekt_id = Column(Integer, ForeignKey('projekty.id'))
     tma_cislo = Column(String(50))
     nazev_testu = Column(String(200))
-    obsah_mereni_id = Column(Integer, ForeignKey('obsahy_mereni.id'))
+    obsah_mereni = Column(SQLAlchemyEnum(ObsahMereniType), nullable=True)  # ENUM místo FK
     pocet_ks = Column(Integer)
     duvod_mereni_id = Column(Integer, ForeignKey('duvody_mereni.id'))
+    # ---
+    
+    # --- ROUTINE fields (nullable) ---
+    routine_type = Column(SQLAlchemyEnum(RoutineType), nullable=True)
+    routine_duration_minutes = Column(Integer, nullable=True)  # Plánovaná délka
     # ---
 
     status = Column(SQLAlchemyEnum(ActivityStatus), nullable=False, default=ActivityStatus.ACTIVE)
@@ -71,7 +92,6 @@ class Activity(Base):
     creator = relationship('User', back_populates='activities')
     zadavatel = relationship('Zadavatel', back_populates='activities')
     projekt = relationship('Projekt', back_populates='activities')
-    obsah_mereni = relationship('ObsahMereni', back_populates='activities')
     duvod_mereni = relationship('DuvodMereni', back_populates='activities')
     time_sessions = relationship('TimeSession', back_populates='activity', cascade="all, delete-orphan")
 
@@ -110,7 +130,6 @@ class Zadavatel(Base):
     email = Column(String(100))
     
     activities = relationship('Activity', back_populates='zadavatel')
-    projekty = relationship('Projekt', back_populates='zadavatel')
 
     def __repr__(self):
         return f"<Zadavatel(id={self.id}, name='{self.name}')>"
@@ -120,9 +139,7 @@ class Projekt(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(50), unique=True, nullable=False)
     name = Column(String(200))
-    zadavatel_id = Column(Integer, ForeignKey('zadavatele.id'), nullable=False)
 
-    zadavatel = relationship('Zadavatel', back_populates='projekty')
     activities = relationship('Activity', back_populates='projekt')
 
     def __repr__(self):

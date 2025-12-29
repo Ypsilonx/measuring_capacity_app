@@ -3,7 +3,8 @@
 import datetime
 from typing import Type
 from sqlalchemy.orm import Session
-from src.database import models, Base
+from src.database import models
+from src.database.models import Base
 
 # --- User CRUD ---
 
