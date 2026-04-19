@@ -66,11 +66,12 @@ Nově (duben 2026):
 - ✅ LogPanel - read-only log panel ve spodní části PlannerWindow (4 řádky, auto-scroll)
 
 **Soubory:**
-- [src/gui/user_selection_dialog.py](src/gui/user_selection_dialog.py)
 - [src/gui/planner_window.py](src/gui/planner_window.py)
+- [src/gui/user_selection_dialog.py](src/gui/user_selection_dialog.py)
 - [src/gui/tracking_dialog.py](src/gui/tracking_dialog.py)
 - [src/gui/routine_dialog.py](src/gui/routine_dialog.py)
 - [src/gui/new_project_task_dialog.py](src/gui/new_project_task_dialog.py)
+- [src/gui/confirm_dialog.py](src/gui/confirm_dialog.py)
 - [src/gui/input_dialog.py](src/gui/input_dialog.py)
 - [src/gui/log_panel.py](src/gui/log_panel.py)
 
@@ -78,7 +79,7 @@ Nově (duben 2026):
 - ✅ [scripts/test_database.py](scripts/test_database.py) - Test DB bez GUI
 - ✅ [scripts/seed_database.py](scripts/seed_database.py) - Naplnění testovacími daty
 
-### **4. Infrastruktura — Logging**
+### **4. Infrastruktura — Logging, dialogy, testy**
 - ✅ `src/utils/app_logger.py` — singleton `get_logger()`, RotatingFileHandler, GUI dispatch
 - ✅ `data/app.log` — rotující log soubor (max 1 MB, 3 zálohy)
 - ✅ `src/gui/confirm_dialog.py` — znovupoužitelný `ConfirmDialog` (title, message, tlačítka, barvy)
@@ -156,6 +157,7 @@ Nově (duben 2026):
 | P3-4 | Fázový breakdown | Graf: kolik % času Příprava / Měření / Úklid pro daný úkol |
 | P3-5 | Predikce | Odhad zbývajícího času na základě historických dat stejného typu |
 | P3-6 | Export dat | Export do CSV/Excel (Pandas) |
+| P3-7 | Filtr přehledů per-user | Statistiky a přehledy filtrovatelné podle profilu (uživatele). Datový model to již podporuje: `Activity.created_by_id` = kdo úkol zadal, `TimeSession.user_id` = kdo trackoval čas. V `crud.get_activities()` přidat volitelný parametr `created_by_id`. Sdílený seznam úkolů zůstává — filtr se týká jen přehledů/statistik. |
 
 ### 🔵 Priorita 4 — Pokročilé funkce (nice to have)
 
@@ -172,12 +174,13 @@ Nově (duben 2026):
 ## 📈 STATISTIKY KÓDU (duben 2026)
 
 ```
-Celkem řádků:   ~1500 LOC
-Python soubory: 9 souborů src/ + 2 skripty
-GUI komponenty: 7 souborů
-DB operace:     ~20 CRUD funkcí
+Celkem řádků:   ~2200 LOC
+Python soubory: 13 souborů src/ + 2 skripty + 1 test
+GUI komponenty: 10 souborů (gui/)
+DB operace:     ~25 CRUD funkcí
 Tabulky DB:     8 (users, activities, time_sessions + 5 číselníků)
 Instrukce AI:   3 soubory .github/instructions/
+Pytest testy:   16 (tests/test_crud.py)
 ```
 
 ---
@@ -209,38 +212,54 @@ python scripts/test_database.py
 measuring_capacity_app/
 │
 ├── src/
-│   ├── main.py                 # Vstupní bod ✅
+│   ├── main.py                         # Vstupní bod ✅
 │   │
-│   ├── database/               # Databázová vrstva ✅
-│   │   ├── models.py           # SQLAlchemy modely
-│   │   ├── database.py         # Engine & session
-│   │   └── crud.py             # CRUD operace
+│   ├── database/                       # Databázová vrstva ✅
+│   │   ├── models.py                   # SQLAlchemy modely + ENUMs
+│   │   ├── database.py                 # Engine & SessionLocal
+│   │   └── crud.py                     # ~25 CRUD funkcí
 │   │
-│   ├── gui/                    # GUI vrstva ✅
-│   │   ├── main_window.py      # Hlavní okno
-│   │   ├── tracking_panel.py   # Tracking panel
-│   │   ├── activity_list.py    # Seznam aktivit
-│   │   └── new_activity_dialog.py  # Dialog
+│   ├── gui/                            # GUI vrstva ✅
+│   │   ├── planner_window.py           # Hlavní okno + toolbar
+│   │   ├── user_selection_dialog.py    # Výběr / vytvoření uživatele
+│   │   ├── tracking_dialog.py          # Tracking s fázemi + PAUZA
+│   │   ├── routine_dialog.py           # Vytvoření ROUTINE
+│   │   ├── new_project_task_dialog.py  # Formulář nového PROJECT_TASK
+│   │   ├── confirm_dialog.py           # Znovupoužitelný ConfirmDialog
+│   │   ├── input_dialog.py             # Jednoduchý vstup textu
+│   │   ├── log_panel.py                # Read-only log panel (spodní lišta)
+│   │   ├── activity_list.py            # (legacy, nepoužíváno aktivně)
+│   │   ├── main_window.py              # (legacy, nepoužíváno aktivně)
+│   │   ├── tracking_panel.py           # (legacy, nepoužíváno aktivně)
+│   │   └── tracking_dialog_old.py      # (legacy, archiv)
 │   │
-│   ├── core/                   # Business logika ❌ (prázdné)
-│   └── utils/                  # Pomocné funkce ❌ (prázdné)
+│   ├── utils/                          # Pomocné funkce ✅
+│   │   └── app_logger.py               # Singleton logger + GUI dispatch
+│   │
+│   └── core/                           # Business logika (prázdné, pro budoucí use)
 │
-├── scripts/                    # Pomocné scripty ✅
+├── tests/                              # Pytest testy ✅
+│   └── test_crud.py                    # 16 testů, in-memory SQLite
+│
+├── scripts/                            # Pomocné scripty ✅
 │   ├── test_database.py
 │   └── seed_database.py
 │
-├── data/                       # SQLite databáze ✅
-│   └── measuring_capacity.db
+├── data/                               # Runtime data (není v gitu)
+│   ├── measuring_capacity.db           # SQLite databáze
+│   └── app.log                         # Rotující log (max 1 MB)
 │
-├── tests/                      # Testy ❌ (prázdné)
+├── .github/instructions/               # Instrukce pro AI asistenta ✅
+│   ├── project-architecture.instructions.md
+│   ├── database-layer.instructions.md
+│   └── gui-layer.instructions.md
 │
-├── venv/                       # Virtual environment ✅
-│
-├── requirements.txt            # Závislosti ✅
-├── .env                        # Konfigurace ✅
-├── README.md                   # Hlavní docs ✅
-├── QUICKSTART.md               # Rychlý start ✅
-└── PROJECT_CONFIG.md           # Config ✅
+├── venv/                               # Virtual environment
+├── requirements.txt
+├── README.md
+├── QUICKSTART.md
+├── MVP_STATUS.md
+└── PROJECT_CONFIG.md
 ```
 
 ---
@@ -257,8 +276,8 @@ measuring_capacity_app/
 - Dark mode theme
 
 ### **Dev tools:**
-- pytest (testy - zatím neimplementováno)
-- black (formatting - zatím neimplementováno)
+- pytest 9.0 (testy — `tests/test_crud.py`, 16 testů)
+- black (formatting — zatím neimplementováno)
 
 ---
 
@@ -279,8 +298,8 @@ measuring_capacity_app/
 - `invalidation_reason`: důvod proč je neplatný
 
 **users** (uživatelé)
-- Zatím hardcoded "admin"
-- Připraveno pro multi-user
+- Multi-user podpora — výběr profilu při startu, přepínání za běhu
+- `Activity.created_by_id` = kdo úkol zadal, `TimeSession.user_id` = kdo trackoval čas
 
 ### **Číselníky:**
 - `zadavatele` (BMW, Audi...)
@@ -330,39 +349,31 @@ tracking_panel.clear_running_session()
 
 ## 🐛 ZNÁMÉ LIMITY
 
-1. **Jen jedna běžící session** - automatický stop při startu nové
-2. **Žádná validace formuláře** - může způsobit chyby
-3. **Potvrzení dokončení** - používá InputDialog (není ideální)
-4. **Žádný error handling** - chyby jen v konzoli
-5. **Žádné testy** - jen manuální testování
-6. **Hardcoded admin user** - není přihlašování
+1. **Jen jedna běžící session** — automatický stop při startu nové
+2. **Žádné editace po vytvoření** — metadata PROJECT_TASK nelze změnit (P2-1)
+3. **Žádné mazání** — session ani aktivity nelze smazat přes GUI (P2-3, P2-4)
+4. **Žádné statistiky** — data jsou v DB, přehledy zatím neimplementovány (P3)
 
-**Tyto limity nejsou kritické pro MVP, opravíme později!**
+**Tyto limity nejsou kritické pro MVP, opravíme dle priorit v backlogu!**
 
 ---
 
 ## 📝 DALŠÍ KROKY
 
-### **Hned teď:**
-1. ✅ MVP je funkční
-2. 🔲 Otestuj reálný workflow
-3. 🔲 Identifikuj priority
+### **Hned teď (P2 — editace dat):**
+1. P2-1 Editace metadat PROJECT_TASK po vytvoření
+2. P2-3 Mazání chybné session (s potvrzením)
+3. P2-4 Archivace / smazání aktivity
 
-### **Krátký termín:**
-1. Zobrazení historie session pro aktivitu
-2. Invalidace session s důvodem
-3. Lepší error handling
+### **Střední termín (P3 — statistiky):**
+1. P3-2 Denní přehled odpracovaného času
+2. P3-1 Statistiky úkolu (čas po fázích, počet přerušení)
+3. P3-7 Filtr přehledů per-user (datový model již připraven)
 
-### **Střední termín:**
-1. Graf: čas podle fází
-2. Plánování dne
-3. ROUTINE aktivity
-
-### **Dlouhý termín:**
-1. Predikce času
-2. Export dat
-3. Multi-user support
-4. PostgreSQL migrace
+### **Dlouhý termín (P4):**
+1. P4-3 Archiv dokončených aktivit
+2. P3-6 Export do CSV/Excel
+3. P4-4 PostgreSQL migrace (Alembic)
 
 ---
 
@@ -371,17 +382,20 @@ tracking_panel.clear_running_session()
 **MVP je FUNKČNÍ a POUŽITELNÝ!** 🎉
 
 Aplikace pokrývá **klíčový workflow**:
-- ✅ Vytvoření PROJECT_TASK
-- ✅ Real-time tracking času
-- ✅ Fázové měření s variabilitou
-- ✅ Přerušení a pokračování
-- ✅ Sumarizace času
-- ✅ Nedokončené aktivity zůstávají aktivní
+- ✅ Vytvoření PROJECT_TASK s validací vstupů
+- ✅ Real-time tracking času s fázemi
+- ✅ PAUZA s elapsed time trackingem
+- ✅ STOP-OK / STOP-NOK s důvodem invalidace
+- ✅ 9 typů ROUTINE aktivit
+- ✅ Multi-user — výběr profilu při startu, přepínání za běhu
+- ✅ Sdílený seznam úkolů (vidí všichni profily)
+- ✅ Potvrzovací dialogy před destruktivními akcemi
+- ✅ Centrální logger + live log panel v GUI
+- ✅ Pytest testy databázové vrstvy (16 testů)
 
 **Nyní můžeš:**
 1. Spustit aplikaci: `python src/main.py`
-2. Vytvořit reálné úkoly
-3. Trackovat čas
-4. Získat přehled o čase stráveném na úkolech
+2. Vytvořit reálné úkoly a trackovat čas
+3. Přepínat mezi profily bez restartu
 
-**Další funkce přidáme podle priorit!** 🚀
+**Další funkce přidáme podle priorit v backlogu!** 🚀
