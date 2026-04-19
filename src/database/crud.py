@@ -1,6 +1,7 @@
 # src/database/crud.py
 
 import datetime
+from datetime import timezone
 from typing import Type
 from sqlalchemy.orm import Session
 from src.database import models
@@ -74,6 +75,25 @@ def get_activities(db: Session, skip: int = 0, limit: int = 100, status: models.
         query = query.filter(models.Activity.status == status)
     return query.offset(skip).limit(limit).all()
 
+def get_activity_by_tma(db: Session, tma_cislo: str):
+    """
+    Vyhledá aktivitu podle TMA čísla.
+
+    Slouží k detekci duplicit před vytvořením nového PROJECT_TASK.
+
+    Args:
+        db: Databázová session
+        tma_cislo: TMA číslo k vyhledání
+
+    Returns:
+        Activity nebo None, pokud záznam neexistuje
+    """
+    return (
+        db.query(models.Activity)
+        .filter(models.Activity.tma_cislo == tma_cislo)
+        .first()
+    )
+
 def update_activity_status(db: Session, activity_id: int, status: models.ActivityStatus):
     """Updates the status of an activity (e.g., to COMPLETED)."""
     db_activity = get_activity(db, activity_id)
@@ -82,6 +102,21 @@ def update_activity_status(db: Session, activity_id: int, status: models.Activit
         db.commit()
         db.refresh(db_activity)
     return db_activity
+
+def reopen_activity(db: Session, activity_id: int):
+    """
+    Znovu otevře dokončenou aktivitu (COMPLETED → ACTIVE).
+
+    Používá se při přeměření nebo opakování úkolu se stejným TMA číslem.
+
+    Args:
+        db: Databázová session
+        activity_id: ID aktivity k opětovnému otevření
+
+    Returns:
+        Aktualizovaný Activity objekt, nebo None pokud aktivita neexistuje
+    """
+    return update_activity_status(db, activity_id, models.ActivityStatus.ACTIVE)
 
 # --- TimeSession CRUD ---
 
@@ -95,7 +130,7 @@ def start_time_session(db: Session, user_id: int, activity_id: int, phase: model
     db_session = models.TimeSession(
         user_id=user_id,
         activity_id=activity_id,
-        start_time=datetime.datetime.utcnow(),
+        start_time=datetime.datetime.now(timezone.utc).replace(tzinfo=None),
         phase=phase,
         notes=notes
     )
@@ -108,7 +143,7 @@ def stop_time_session(db: Session, time_session_id: int):
     """Stops a running time session and calculates its duration."""
     db_session = db.query(models.TimeSession).filter(models.TimeSession.id == time_session_id).first()
     if db_session and db_session.end_time is None:
-        db_session.end_time = datetime.datetime.utcnow()
+        db_session.end_time = datetime.datetime.now(timezone.utc).replace(tzinfo=None)
         
         # Calculate duration in minutes
         duration_delta = db_session.end_time - db_session.start_time

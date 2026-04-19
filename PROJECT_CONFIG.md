@@ -44,6 +44,7 @@
 - Hotové TODO položky v backlogu přeškrtni (`~~text~~`) nebo odstraň, nikdy je nesmazávej bez záznamu
 - `PROJECT_CONFIG.md` aktualizuj při změně dev pravidel nebo nové infrastrukturní vrstvy
 - `README.md` aktualizuj při změně schématu DB nebo přidání nové funkční oblasti
+- **Toto se provádí PŘED každým commitem, ne po — aktualizace .md souborů je součástí každého úkolu**
 
 ## Aktuální stav projektu
 - [x] KROK 0: Základní setup
@@ -54,8 +55,11 @@
 - [x] Responzivní design
 - [x] Instrukce pro AI asistenta (`.github/instructions/`)
 - [x] Logging — `src/utils/app_logger.py` + `LogPanel` v GUI
-- [ ] Error handling a validace — viz MVP_STATUS.md P1
-- [ ] Statistiky a analytika — viz MVP_STATUS.md P3
+- [x] P1-1 Validace formulářů — `NewProjectTaskDialog`, TMA reopen logika
+- [x] P1-2 Potvrzovací dialogy — `ConfirmDialog`
+- [x] P1-4 Pytest testy — `tests/test_crud.py`, 16 testů
+- [x] GUI-1 Toolbar — datum, uživatel, přepínání uživatele za běhu
+- [ ] P2–P4 viz MVP_STATUS.md backlog
 
 ## Kde najdeš co
 

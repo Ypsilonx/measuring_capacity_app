@@ -13,8 +13,12 @@ Nově (duben 2026):
 - Implementován centrální logger (`src/utils/app_logger.py`) — zápis do `data/app.log` (rotující), konzole a GUI
 - Přidán `LogPanel` widget do spodní části `PlannerWindow` — live přehled akcí (4 řádky, read-only)
 - Veškerý `print()` nahrazen `logger.info/warning/error()` ve všech src souborech
+- Formulářová validace v `NewProjectTaskDialog` — prázdná pole, duplicitní TMA (ACTIVE = blokace, COMPLETED = panel pro znovuotevření)
+- `ConfirmDialog` — znovupoužitelný modální dialog pro potvrzení destruktivních akcí
+- Toolbar v `PlannerWindow` — datum, jméno uživatele, tlačítko „Přepnout uživatele" bez restartu aplikace
+- Pytest testy pro `crud.py` — 16 testů, in-memory SQLite, 0 failures
 
-**Aktuální zaměření:** P1 — stabilita. Logger hotov. Zbývají: validace formulářů, potvrzovací dialogy, testy.
+**Aktuální zaměření:** Priorita P1 dokončena. Zbývají P2–P4 backlog nebo další GUI vylepšení.
 
 ---
 
@@ -77,6 +81,9 @@ Nově (duben 2026):
 ### **4. Infrastruktura — Logging**
 - ✅ `src/utils/app_logger.py` — singleton `get_logger()`, RotatingFileHandler, GUI dispatch
 - ✅ `data/app.log` — rotující log soubor (max 1 MB, 3 zálohy)
+- ✅ `src/gui/confirm_dialog.py` — znovupoužitelný `ConfirmDialog` (title, message, tlačítka, barvy)
+- ✅ `src/gui/log_panel.py` — `LogPanel` widget ve spodní části `PlannerWindow`
+- ✅ `tests/test_crud.py` — 16 pytest testů (User, Activity, TimeSession), in-memory SQLite
 
 ### **5. Dokumentace & konvence**
 - ✅ [README.md](README.md) — přehled projektu, schéma DB, workflow
@@ -105,6 +112,7 @@ Nově (duben 2026):
 
 ### **Funguje:**
 - ✅ Multi-user - výběr uživatele při startu
+- ✅ Přepínání uživatele za běhu (toolbar tlačítko, bez restartu aplikace)
 - ✅ Jeden úkol = mnoho session (i ve stejné fázi)
 - ✅ PAUZA s možností zaznamenání ROUTINE
 - ✅ Změna fází kdykoliv
@@ -124,10 +132,10 @@ Nově (duben 2026):
 
 | # | Úkol | Popis |
 |---|------|-------|
-| P1-1 | Error handling formulářů | Validace vstupů v `NewProjectTaskDialog` — prázdná pole, duplicitní TMA |
-| P1-2 | Potvrzovací dialogy | "Opravdu chceš dokončit úkol?" před destruktivními akcemi |
+| ~~P1-1~~ | ~~Error handling formulářů~~ | ✅ Hotovo — validace vstupů, duplicitní TMA (reopen panel pro COMPLETED) |
+| ~~P1-2~~ | ~~Potvrzovací dialogy~~ | ✅ Hotovo — `ConfirmDialog` + potvrzení před dokončením úkolu |
 | ~~P1-3~~ | ~~Logging~~ | ✅ Hotovo — `src/utils/app_logger.py` + `LogPanel` v GUI + `data/app.log` |
-| P1-4 | Základní testy | `pytest` pro crud.py funkce — alespoň create, get, stop session |
+| ~~P1-4~~ | ~~Základní testy~~ | ✅ Hotovo — `tests/test_crud.py`, 16 testů, 0 failures |
 
 ### 🟡 Priorita 2 — Editace dat (uživatelský komfort)
 

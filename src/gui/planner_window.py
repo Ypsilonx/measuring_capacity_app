@@ -14,7 +14,9 @@ from src.database import crud, models
 from src.gui.tracking_dialog import TrackingDialog
 from src.gui.new_project_task_dialog import NewProjectTaskDialog
 from src.gui.routine_dialog import RoutineDialog
+from src.gui.confirm_dialog import ConfirmDialog
 from src.gui.log_panel import LogPanel
+from src.gui.user_selection_dialog import UserSelectionDialog
 from src.utils.app_logger import get_logger
 
 logger = get_logger()
@@ -77,28 +79,64 @@ class PlannerWindow:
         
     def _create_widgets(self):
         """Vytvoří všechny GUI komponenty."""
-        
+
         # Hlavní layout
         self.root.grid_columnconfigure(0, weight=4)  # Levý panel - PROJECT_TASKS (80%)
         self.root.grid_columnconfigure(1, weight=1)  # Pravý panel - ROUTINES (20%)
-        self.root.grid_rowconfigure(0, weight=1)     # Hlavní obsah
-        self.root.grid_rowconfigure(1, weight=0)     # Log panel (pevná výška)
-        
-        # === LEVÝ PANEL - Nedokončené úkoly ===
+        self.root.grid_rowconfigure(0, weight=0)     # Toolbar (pevná výška)
+        self.root.grid_rowconfigure(1, weight=1)     # Hlavní obsah
+        self.root.grid_rowconfigure(2, weight=0)     # Log panel (pevná výška)
+
+        # === TOOLBAR ===
+        toolbar = ctk.CTkFrame(
+            self.root,
+            fg_color=("gray80", "gray18"),
+            height=44,
+            corner_radius=0,
+        )
+        toolbar.grid(row=0, column=0, columnspan=2, sticky="ew", padx=0, pady=0)
+        toolbar.pack_propagate(False)  # Zachová pevnou výšku
+
+        # Levá část toolbaru — datum
+        ctk.CTkLabel(
+            toolbar,
+            text=f"📅 {self.current_date.strftime('%d.%m.%Y')}",
+            font=ctk.CTkFont(size=12),
+            text_color="gray",
+        ).pack(side="left", padx=14)
+
+        # Separator
+        ctk.CTkFrame(toolbar, width=1, fg_color="gray40").pack(
+            side="left", fill="y", pady=8
+        )
+
+        # Aktivní uživatel
+        self._toolbar_user_label = ctk.CTkLabel(
+            toolbar,
+            text=f"👤 {self.current_user.full_name}",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        )
+        self._toolbar_user_label.pack(side="left", padx=14)
+
+        # Pravá část toolbaru — tlačítka
+        ctk.CTkButton(
+            toolbar,
+            text="🔄 Přepnout uživatele",
+            command=self._switch_user,
+            height=30,
+            font=ctk.CTkFont(size=12),
+            fg_color=("gray65", "gray30"),
+            hover_color=("gray55", "gray40"),
+        ).pack(side="right", padx=10)
+
+        # === LEVÁ PANEL - Nedokončené úkoly ===
         left_frame = ctk.CTkFrame(self.root)
-        left_frame.grid(row=0, column=0, padx=10, pady=(10, 4), sticky="nsew")
+        left_frame.grid(row=1, column=0, padx=10, pady=(4, 4), sticky="nsew")
         
         # Header s uživatelem
         header = ctk.CTkFrame(left_frame, fg_color="transparent")
         header.pack(fill="x", padx=10, pady=10)
-        
-        user_label = ctk.CTkLabel(
-            header,
-            text=f"👤 {self.current_user.full_name}",
-            font=ctk.CTkFont(size=16, weight="bold")
-        )
-        user_label.pack(side="left")
-        
+
         date_label = ctk.CTkLabel(
             header,
             text=f"📅 {self.current_date.strftime('%d.%m.%Y')}",
@@ -133,7 +171,7 @@ class PlannerWindow:
         
         # === PRAVÝ PANEL - Rychlé akce ROUTINES ===
         right_frame = ctk.CTkFrame(self.root)
-        right_frame.grid(row=0, column=1, padx=10, pady=(10, 4), sticky="nsew")
+        right_frame.grid(row=1, column=1, padx=10, pady=(4, 4), sticky="nsew")
         
         # Nadpis
         routines_title = ctk.CTkLabel(
@@ -199,7 +237,7 @@ class PlannerWindow:
             border_width=1,
             border_color=("gray70", "gray30"),
         )
-        log_panel.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 8), sticky="ew")
+        log_panel.grid(row=2, column=0, columnspan=2, padx=10, pady=(0, 8), sticky="ew")
     
     def _load_data(self):
         """Načte data z databáze."""
@@ -275,6 +313,24 @@ class PlannerWindow:
         )
         logger.info(f"Aktivita ID={activity_id} označena jako COMPLETED")
         self._refresh_tasks()
+
+    def _switch_user(self):
+        """
+        Otevře dialog výběru uživatele a přepne na nově vybraného.
+
+        Pokud uživatel vybere stejný profil nebo dialog zruší, nic se nemění.
+        """
+        dialog = UserSelectionDialog(self.root, allow_cancel=True)
+        self.root.wait_window(dialog)
+        new_user = dialog.get_selected_user()
+
+        if new_user and new_user.id != self.current_user.id:
+            self.current_user = new_user
+            self._toolbar_user_label.configure(text=f"👤 {new_user.full_name}")
+            logger.info(f"Přepnut uživatel na: {new_user.full_name}")
+            self._refresh_tasks()
+        elif new_user:
+            logger.info(f"Uživatel beze změny: {new_user.full_name}")
     
     def run(self):
         """Spustí hlavní smyčku aplikace."""
@@ -462,5 +518,21 @@ class TaskCard(ctk.CTkFrame):
         self.planner.open_tracking(self.activity)
     
     def _on_complete(self):
-        """Handler pro tlačítko Dokončit."""
-        self.planner.complete_activity(self.activity.id)
+        """Handler pro tlačítko Dokončit — s potvrzovacím dialogem."""
+        tma = self.activity.tma_cislo or f"ID={self.activity.id}"
+        dialog = ConfirmDialog(
+            self.planner.root,
+            title="Dokončit úkol",
+            message=(
+                f"Opravdu chceš označit úkol jako dokončený?\n\n"
+                f"TMA: {tma}\n"
+                f"{self.activity.nazev_testu or ''}\n\n"
+                f"Aktivitu lze kdykoli znovu otevřít."
+            ),
+            confirm_text="✅ Dokončit",
+            confirm_color="green",
+            confirm_hover="darkgreen",
+        )
+        self.planner.root.wait_window(dialog)
+        if dialog.confirmed:
+            self.planner.complete_activity(self.activity.id)

@@ -9,22 +9,27 @@ Umožňuje:
 import customtkinter as ctk
 from src.database.database import SessionLocal
 from src.database import crud
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 
 class UserSelectionDialog(ctk.CTkToplevel):
     """Dialog pro výběr/vytvoření uživatele."""
     
-    def __init__(self, parent):
+    def __init__(self, parent, allow_cancel: bool = False):
         """
         Inicializace dialogu.
-        
+
         Args:
             parent: Rodičovský widget (None pro root)
+            allow_cancel: Pokud True, lze dialog zavřít bez výběru (pro přepínání uživatele)
         """
         super().__init__(parent)
-        
+
         self.selected_user = None
         self.db = SessionLocal()
+        self._allow_cancel = allow_cancel
         
         # Nastavení okna
         self.title("Výběr uživatele")
@@ -187,7 +192,7 @@ class UserSelectionDialog(ctk.CTkToplevel):
             user: User objekt
         """
         self.selected_user = user
-        print(f"✅ Vybrán uživatel: {user.full_name}")
+        logger.info(f"Vybrán uživatel: {user.full_name}")
         self.db.close()
         self.grab_release()
         self.destroy()
@@ -200,23 +205,23 @@ class UserSelectionDialog(ctk.CTkToplevel):
         
         # Validace
         if not username:
-            print("❌ Uživatelské jméno je povinné")
+            logger.warning("Uživatelské jméno je povinné")
             return
         
         if not fullname:
-            print("❌ Celé jméno je povinné")
+            logger.warning("Celé jméno je povinné")
             return
         
         # Kontrola duplicity
         existing = crud.get_user_by_username(self.db, username)
         if existing:
-            print(f"❌ Uživatel '{username}' již existuje")
+            logger.warning(f"Uživatel '{username}' již existuje")
             return
         
         try:
             # Vytvoř uživatele
             new_user = crud.create_user(self.db, username=username, full_name=fullname)
-            print(f"✅ Vytvořen nový uživatel: {new_user.full_name}")
+            logger.info(f"Vytvořen nový uživatel: {new_user.full_name}")
             
             # Vyčisti formulář
             self.username_entry.delete(0, 'end')
@@ -226,12 +231,16 @@ class UserSelectionDialog(ctk.CTkToplevel):
             self._load_users()
             
         except Exception as e:
-            print(f"❌ Chyba při vytváření uživatele: {e}")
+            logger.error(f"Chyba při vytváření uživatele: {e}")
     
     def _on_cancel(self):
         """Handler pro pokus o zavření okna."""
-        # Nelze zavřít bez výběru uživatele
-        print("⚠️  Musíte vybrat nebo vytvořit uživatele!")
+        if self._allow_cancel:
+            self.db.close()
+            self.grab_release()
+            self.destroy()
+        else:
+            logger.warning("Musíte vybrat nebo vytvořit uživatele!")
     
     def get_selected_user(self):
         """
