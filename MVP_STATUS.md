@@ -1,6 +1,21 @@
-# 📊 MVP - PŘEHLED PROJEKTU
+# 📊 STAV PROJEKTU — measuring_capacity_app
 
-## ✅ CO JE HOTOVO (29.12.2025)
+> Naposledy aktualizováno: 19.4.2026
+
+---
+
+## 📌 KDE JSME TEĎ
+
+**MVP je funkční.** Aplikace zvládá celý základní workflow od vytvoření úkolu přes tracking s fázemi až po sumarizaci. Databázová vrstva je stabilní. GUI je responzivní a multi-user.
+
+Nově (duben 2026):
+- Přidány instrukce pro AI asistenta (`.github/instructions/`) — konvence architektury, DB vrstvy a GUI vrstvy
+
+**Aktuální zaměření:** Aplikace je připravena na rozšíření o statistiky a analytiku.
+
+---
+
+## ✅ CO JE HOTOVO
 
 ### **1. Databázová vrstva** (100%)
 - ✅ SQLAlchemy ORM modely
@@ -54,11 +69,13 @@
 - ✅ [scripts/test_database.py](scripts/test_database.py) - Test DB bez GUI
 - ✅ [scripts/seed_database.py](scripts/seed_database.py) - Naplnění testovacími daty
 
-### **4. Dokumentace**
-- ✅ [README.md](README.md) - Hlavní dokumentace
-- ✅ [QUICKSTART.md](QUICKSTART.md) - Rychlý start MVP
-- ✅ [PROJECT_CONFIG.md](PROJECT_CONFIG.md) - Konfigurace projektu
-- ✅ Tento přehled (MVP_STATUS.md)
+### **4. Dokumentace & konvence**
+- ✅ [README.md](README.md) — přehled projektu, schéma DB, workflow
+- ✅ [QUICKSTART.md](QUICKSTART.md) — jak spustit, seed, ovládání
+- ✅ [PROJECT_CONFIG.md](PROJECT_CONFIG.md) — dev pravidla, příkazy
+- ✅ [.github/instructions/project-architecture.instructions.md](.github/instructions/project-architecture.instructions.md) — struktura složek, pojmenování, importy
+- ✅ [.github/instructions/database-layer.instructions.md](.github/instructions/database-layer.instructions.md) — SQLAlchemy vzory, CRUD konvence, session management
+- ✅ [.github/instructions/gui-layer.instructions.md](.github/instructions/gui-layer.instructions.md) — CustomTkinter konvence, dialog komunikace, timer pravidla
 
 ---
 
@@ -92,58 +109,58 @@
 
 ---
 
-## ❌ CO JEŠTĚ CHYBÍ (Příští iterace)
+## 🗂️ TODO — Backlog (seřazeno dle priority)
 
-### **Priorita 1 - Statistiky a analýzy:**
-- ❌ Dashboard s grafy
-- ❌ Graf: rozdělení času podle fází
-- ❌ Statistiky pro úkol (průměrná session, nejdelší/nejkratší)
-- ❌ Denní/týdenní přehledy
-- ❌ Predikce času na základě historie
+### 🔴 Priorita 1 — Opravy a stabilita (udělat jako první)
 
-### **Priorita 2 - Pokročilé funkce:**
-- ❌ Editace poznámek k existující session
-- ❌ Editace aktivit
-- ❌ Mazání sessions/aktivit
-- ❌ Export dat (CSV, Excel)
-- ❌ Filtrování a vyhledávání
+| # | Úkol | Popis |
+|---|------|-------|
+| P1-1 | Error handling formulářů | Validace vstupů v `NewProjectTaskDialog` — prázdná pole, duplicitní TMA |
+| P1-2 | Potvrzovací dialogy | "Opravdu chceš dokončit úkol?" před destruktivními akcemi |
+| P1-3 | Logging | `logging` modul místo `print()`, log do souboru v `data/app.log` |
+| P1-4 | Základní testy | `pytest` pro crud.py funkce — alespoň create, get, stop session |
 
-### **Priorita 3 - Kvalita:**
-- ❌ Error handling a validace formulářů
-- ❌ Potvrzovací dialogy pro destruktivní akce
-- ❌ Testy (pytest)
-- ❌ Logging
-- ❌ Migrace na PostgreSQL (volitelné)
+### 🟡 Priorita 2 — Editace dat (uživatelský komfort)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| P2-1 | Editace aktivity | Možnost změnit metadata PROJECT_TASK po vytvoření |
+| P2-2 | Editace poznámek session | Přidat/změnit `notes` u existující TimeSession |
+| P2-3 | Mazání session | Smazat chybnou session (s potvrzením) |
+| P2-4 | Mazání aktivity | Archivace nebo smazání celé aktivity |
+
+### 🟢 Priorita 3 — Statistiky a analytika (hlavní přidaná hodnota)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| P3-1 | Statistiky úkolu | Průměrná délka session, celkový čas po fázích, počet přerušení |
+| P3-2 | Denní přehled | Kolik hodin odpracováno dnes (PROJECT_TASK + ROUTINE breakdown) |
+| P3-3 | Týdenní přehled | Agregovaný přehled po dnech, graf |
+| P3-4 | Fázový breakdown | Graf: kolik % času Příprava / Měření / Úklid pro daný úkol |
+| P3-5 | Predikce | Odhad zbývajícího času na základě historických dat stejného typu |
+| P3-6 | Export dat | Export do CSV/Excel (Pandas) |
+
+### 🔵 Priorita 4 — Pokročilé funkce (nice to have)
+
+| # | Úkol | Popis |
+|---|------|-------|
+| P4-1 | Filtrování aktivit | Filtr v PlannerWindow dle zadavatele / projektu / data |
+| P4-2 | Vyhledávání | Fulltextové hledání v TMA a názvech testů |
+| P4-3 | Archiv dokončených | Okno/tab pro prohlížení COMPLETED aktivit |
+| P4-4 | PostgreSQL migrace | Volitelný přechod z SQLite na PostgreSQL (Alembic migrace) |
+| P4-5 | Notifikace | Upozornění při dlouhé pauze nebo dosažení odhadovaného času |
 
 ---
 
-## 📈 STATISTIKY
+## 📈 STATISTIKY KÓDU (duben 2026)
 
-### **Kód:**
 ```
 Celkem řádků:   ~1500 LOC
-Python soubory: 9 souborů
-GUI komponenty: 4 soubory
+Python soubory: 9 souborů src/ + 2 skripty
+GUI komponenty: 7 souborů
 DB operace:     ~20 CRUD funkcí
-```
-
-### **Databáze:**
-```
-Tabulky:        8 tabulek
-  - users (1)
-  - activities (1)
-  - time_sessions (1)
-  - Číselníky (5)
-
-Relationships:  Plně mapované (SQLAlchemy ORM)
-```
-
-### **GUI:**
-```
-Hlavní okno:    1200x700 px
-Panely:         2 (seznam + tracking)
-Widgety:        ~30+ CustomTkinter prvků
-Dark mode:      ✅
+Tabulky DB:     8 (users, activities, time_sessions + 5 číselníků)
+Instrukce AI:   3 soubory .github/instructions/
 ```
 
 ---

@@ -34,15 +34,22 @@
 - Desktop aplikace (ne web, ne mobile)
 
 ## Aktuální stav projektu
-- [x] KROK 0: Základní setup dokončen
+- [x] KROK 0: Základní setup
 - [x] KROK 1: Návrh DB schématu
 - [x] KROK 2: MVP aplikace funkční
 - [x] Multi-user podpora
 - [x] ROUTINES support
 - [x] Responzivní design
-- [ ] Statistiky a predikce
+- [x] Instrukce pro AI asistenta (`.github/instructions/`)
+- [ ] Error handling a validace — viz MVP_STATUS.md P1
+- [ ] Statistiky a analytika — viz MVP_STATUS.md P3
 
-## Poznámky
-- Uživatel chce minimalistický přístup - nedělat nic navíc
-- Testovat každý krok před pokračováním
-- README aktualizovat průběžně
+## Kde najdeš co
+
+| Soubor | Obsah |
+|--------|-------|
+| [README.md](README.md) | Přehled projektu, schéma DB, workflow |
+| [QUICKSTART.md](QUICKSTART.md) | Jak spustit, seed data, ovládání |
+| [MVP_STATUS.md](MVP_STATUS.md) | Aktuální stav + TODO backlog s prioritami |
+| [PROJECT_CONFIG.md](PROJECT_CONFIG.md) | Tento soubor — dev pravidla a příkazy |
+| [.github/instructions/](`.github/instructions/`) | Konvence pro AI asistenta (architektura, DB, GUI) |
