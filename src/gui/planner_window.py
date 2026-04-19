@@ -14,6 +14,10 @@ from src.database import crud, models
 from src.gui.tracking_dialog import TrackingDialog
 from src.gui.new_project_task_dialog import NewProjectTaskDialog
 from src.gui.routine_dialog import RoutineDialog
+from src.gui.log_panel import LogPanel
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 # Nastavení CustomTkinter vzhledu
 ctk.set_appearance_mode("dark")
@@ -77,11 +81,12 @@ class PlannerWindow:
         # Hlavní layout
         self.root.grid_columnconfigure(0, weight=4)  # Levý panel - PROJECT_TASKS (80%)
         self.root.grid_columnconfigure(1, weight=1)  # Pravý panel - ROUTINES (20%)
-        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)     # Hlavní obsah
+        self.root.grid_rowconfigure(1, weight=0)     # Log panel (pevná výška)
         
         # === LEVÝ PANEL - Nedokončené úkoly ===
         left_frame = ctk.CTkFrame(self.root)
-        left_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        left_frame.grid(row=0, column=0, padx=10, pady=(10, 4), sticky="nsew")
         
         # Header s uživatelem
         header = ctk.CTkFrame(left_frame, fg_color="transparent")
@@ -128,7 +133,7 @@ class PlannerWindow:
         
         # === PRAVÝ PANEL - Rychlé akce ROUTINES ===
         right_frame = ctk.CTkFrame(self.root)
-        right_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        right_frame.grid(row=0, column=1, padx=10, pady=(10, 4), sticky="nsew")
         
         # Nadpis
         routines_title = ctk.CTkLabel(
@@ -186,6 +191,15 @@ class PlannerWindow:
             if col > 2:
                 col = 0
                 row += 1
+
+        # === LOG PANEL - spodní pruh přes celou šířku ===
+        log_panel = LogPanel(
+            self.root,
+            fg_color=("gray85", "gray10"),
+            border_width=1,
+            border_color=("gray70", "gray30"),
+        )
+        log_panel.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 8), sticky="ew")
     
     def _load_data(self):
         """Načte data z databáze."""
@@ -259,17 +273,17 @@ class PlannerWindow:
             activity_id,
             models.ActivityStatus.COMPLETED
         )
-        print(f"✅ Activity {activity_id} marked as COMPLETED")
+        logger.info(f"Aktivita ID={activity_id} označena jako COMPLETED")
         self._refresh_tasks()
     
     def run(self):
         """Spustí hlavní smyčku aplikace."""
-        print("✅ Plánovač spuštěn")
+        logger.info("Plánovač spuštěn")
         self.root.mainloop()
-        
+
         # Cleanup při zavření
         self.db.close()
-        print("👋 Aplikace ukončena")
+        logger.info("Aplikace ukončena")
 
 
 class TaskCard(ctk.CTkFrame):

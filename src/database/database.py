@@ -4,6 +4,9 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.database.models import Base
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 # --- Configuration ---
 # Define the path for the data directory
@@ -35,12 +38,12 @@ def init_db():
     # Ensure the data directory exists
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-        print(f"Created directory: {DATA_DIR}")
+        logger.info(f"Vytvořen adresář: {DATA_DIR}")
 
     # Create all tables
-    print("Initializing database and creating tables...")
+    logger.info("Inicializace databáze a vytváření tabulek...")
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully.")
+    logger.info("Databázové tabulky jsou připraveny.")
 
 def get_db():
     """

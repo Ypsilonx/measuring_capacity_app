@@ -10,6 +10,9 @@ Umožňuje:
 import customtkinter as ctk
 from datetime import datetime, timedelta
 from src.database import crud, models
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 
 class RoutineDialog(ctk.CTkToplevel):
@@ -179,10 +182,10 @@ class RoutineDialog(ctk.CTkToplevel):
         try:
             duration = int(self.duration_entry.get())
             if duration <= 0:
-                print("❌ Trvání musí být kladné číslo")
+                logger.warning("Trvání musí být kladné číslo")
                 return
         except ValueError:
-            print("❌ Zadejte platné číslo minut")
+            logger.warning("Zadejte platné číslo minut")
             return
         
         # Název (pro VLASTNÍ)
@@ -191,7 +194,7 @@ class RoutineDialog(ctk.CTkToplevel):
             if self.custom_name_entry:
                 routine_name = self.custom_name_entry.get().strip()
                 if not routine_name:
-                    print("❌ Zadejte název vlastní aktivity")
+                    logger.warning("Zadejte název vlastní aktivity")
                     return
         
         # Vytvoř ROUTINE aktivitu
@@ -224,13 +227,13 @@ class RoutineDialog(ctk.CTkToplevel):
             session.duration_minutes = duration
             self.db.commit()
             
-            print(f"✅ ROUTINE vytvořena: {activity.name} ({duration} min)")
+            logger.info(f"ROUTINE vytvořena: {activity.name} ({duration} min)")
             
             # Zavři dialog
             self.grab_release()
             self.destroy()
             
         except Exception as e:
-            print(f"❌ Chyba při vytváření ROUTINE: {e}")
+            logger.error(f"Chyba při vytváření ROUTINE: {e}")
             import traceback
             traceback.print_exc()

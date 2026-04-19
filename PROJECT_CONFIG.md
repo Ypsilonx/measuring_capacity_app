@@ -30,8 +30,20 @@
 ### 6. GUI
 - CustomTkinter (dark mode)
 - Responzivní design pro různá rozlišení
-- 2-sloupcový layout (PROJECT_TASKS 80% + ROUTINES 20%)
+- 2-sloupcový layout (PROJECT_TASKS 80% + ROUTINES 20%) + LogPanel dole
 - Desktop aplikace (ne web, ne mobile)
+
+### 7. Logging
+- **Nikdy nepoužívej `print()`** — vždy `from src.utils.app_logger import get_logger`
+- Logger je singleton — volej `get_logger()` na vrcholu každého modulu
+- Úrovně: `logger.info()` pro normální tok, `logger.warning()` pro validační chyby, `logger.error()` pro výjimky
+- Log soubor: `data/app.log` (rotující, max 1 MB)
+
+### 8. Dokumentace — pravidlo aktuálnosti
+- **Po každé implementované funkci aktualizuj `MVP_STATUS.md`** — přesuň hotové položky do sekce CO JE HOTOVO, aktualizuj záhlaví KDE JSME TEĎ
+- Hotové TODO položky v backlogu přeškrtni (`~~text~~`) nebo odstraň, nikdy je nesmazávej bez záznamu
+- `PROJECT_CONFIG.md` aktualizuj při změně dev pravidel nebo nové infrastrukturní vrstvy
+- `README.md` aktualizuj při změně schématu DB nebo přidání nové funkční oblasti
 
 ## Aktuální stav projektu
 - [x] KROK 0: Základní setup
@@ -41,6 +53,7 @@
 - [x] ROUTINES support
 - [x] Responzivní design
 - [x] Instrukce pro AI asistenta (`.github/instructions/`)
+- [x] Logging — `src/utils/app_logger.py` + `LogPanel` v GUI
 - [ ] Error handling a validace — viz MVP_STATUS.md P1
 - [ ] Statistiky a analytika — viz MVP_STATUS.md P3
 
@@ -53,3 +66,5 @@
 | [MVP_STATUS.md](MVP_STATUS.md) | Aktuální stav + TODO backlog s prioritami |
 | [PROJECT_CONFIG.md](PROJECT_CONFIG.md) | Tento soubor — dev pravidla a příkazy |
 | [.github/instructions/](`.github/instructions/`) | Konvence pro AI asistenta (architektura, DB, GUI) |
+| [src/utils/app_logger.py](src/utils/app_logger.py) | Singleton logger — použij `get_logger()` |
+| [data/app.log](data/app.log) | Rotující log soubor (runtime, není v gitu) |

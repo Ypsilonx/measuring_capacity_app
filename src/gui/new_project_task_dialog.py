@@ -13,6 +13,9 @@ Formulář obsahuje:
 
 import customtkinter as ctk
 from src.database import crud, models
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 
 class NewProjectTaskDialog(ctk.CTkToplevel):
@@ -258,11 +261,11 @@ class NewProjectTaskDialog(ctk.CTkToplevel):
         if name:
             try:
                 new_item = crud.create_lookup_item(self.db, models.Zadavatel, name=name, email="")
-                print(f"✅ Zadavatel vytvořen: {new_item.name}")
+                logger.info(f"Zadavatel vytvořen: {new_item.name}")
                 self._load_lookups()
                 self.zadavatel_combo.set(name)
             except Exception as e:
-                print(f"❌ Chyba: {e}")
+                logger.error(f"Chyba při vytváření zadavatele: {e}")
     
     def _add_projekt(self):
         """Přidá nový projekt."""
@@ -281,11 +284,11 @@ class NewProjectTaskDialog(ctk.CTkToplevel):
                         code=code,
                         name=name
                     )
-                    print(f"✅ Projekt vytvořen: {new_item.code}")
+                    logger.info(f"Projekt vytvořen: {new_item.code}")
                     self._load_lookups()
                     self.projekt_combo.set(f"{code} - {name}")
                 except Exception as e:
-                    print(f"❌ Chyba: {e}")
+                    logger.error(f"Chyba při vytváření projektu: {e}")
     
     def _add_duvod(self):
         """Přidá nový důvod měření."""
@@ -295,22 +298,22 @@ class NewProjectTaskDialog(ctk.CTkToplevel):
         if name:
             try:
                 new_item = crud.create_lookup_item(self.db, models.DuvodMereni, name=name)
-                print(f"✅ Důvod měření vytvořen: {new_item.name}")
+                logger.info(f"Důvod měření vytvořen: {new_item.name}")
                 self._load_lookups()
                 self.duvod_combo.set(name)
             except Exception as e:
-                print(f"❌ Chyba: {e}")
+                logger.error(f"Chyba při vytváření důvodu měření: {e}")
     
     def _save(self):
         """Uloží novou aktivitu."""
         
         # Validace povinných polí
         if not self.tma_entry.get():
-            print("❌ TMA číslo je povinné")
+            logger.warning("Validace: TMA číslo je povinné")
             return
         
         if not self.test_name_entry.get():
-            print("❌ Název testu je povinný")
+            logger.warning("Validace: Název testu je povinný")
             return
         
         # Získej ID z dropdown hodnot
@@ -349,13 +352,13 @@ class NewProjectTaskDialog(ctk.CTkToplevel):
         
         try:
             new_activity = crud.create_activity(self.db, activity_data)
-            print(f"✅ PROJECT_TASK vytvořen: ID={new_activity.id}, TMA={new_activity.tma_cislo}")
+            logger.info(f"PROJECT_TASK vytvořen: ID={new_activity.id}, TMA={new_activity.tma_cislo}")
             
             # Zavři dialog
             self.grab_release()
             self.destroy()
             
         except Exception as e:
-            print(f"❌ Chyba při vytváření úkolu: {e}")
+            logger.error(f"Chyba při vytváření úkolu: {e}")
             import traceback
             traceback.print_exc()

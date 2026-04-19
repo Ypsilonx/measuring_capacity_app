@@ -14,6 +14,9 @@ Layout: Široké okno se 2 sloupci - levý pro tracking, pravý pro ROUTINES
 import customtkinter as ctk
 from datetime import datetime, timedelta
 from src.database import crud, models
+from src.utils.app_logger import get_logger
+
+logger = get_logger()
 
 
 class TrackingDialog(ctk.CTkToplevel):
@@ -319,7 +322,7 @@ class TrackingDialog(ctk.CTkToplevel):
             phase=phase
         )
         
-        print(f"⏱️  Tracking started: Phase={phase.value}")
+        logger.info(f"Tracking spuštěn: fáze {phase.value}")
         
         self._update_ui_running()
     
@@ -374,7 +377,7 @@ class TrackingDialog(ctk.CTkToplevel):
             btn.configure(state="normal")
         self.continue_btn.configure(state="normal")
         
-        print(f"⏸️  Tracking paused at {self.paused_elapsed_seconds:.0f}s")
+        logger.info(f"Tracking pozastaven po {self.paused_elapsed_seconds:.0f}s")
     
     def _on_continue(self):
         """Handler pro POKRAČOVAT tlačítko."""
@@ -388,7 +391,7 @@ class TrackingDialog(ctk.CTkToplevel):
         # Obnov running UI
         self._update_ui_running()
         
-        print(f"▶️  Tracking resumed from {self.paused_elapsed_seconds:.0f}s")
+        logger.info(f"Tracking obnoven z {self.paused_elapsed_seconds:.0f}s")
     
     def _quick_routine_during_pause(self, config):
         """
@@ -413,7 +416,7 @@ class TrackingDialog(ctk.CTkToplevel):
         # Ukonči session
         stopped = crud.stop_time_session(self.db, self.running_session.id)
         
-        print(f"✅ Session stopped (VALID): {stopped.duration_minutes} min")
+        logger.info(f"Session ukončena (OK): {stopped.duration_minutes} min")
         
         # Zavři dialog
         self.grab_release()
@@ -449,7 +452,7 @@ class TrackingDialog(ctk.CTkToplevel):
         # Invaliduj
         crud.invalidate_time_session(self.db, stopped.id, reason or "Bez udání důvodu")
         
-        print(f"❌ Session stopped (INVALID): {stopped.duration_minutes} min - {reason}")
+        logger.warning(f"Session ukončena (NOK): {stopped.duration_minutes} min — důvod: {reason}")
         
         # Zavři dialog
         self.grab_release()

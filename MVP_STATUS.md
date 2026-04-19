@@ -10,8 +10,11 @@
 
 Nově (duben 2026):
 - Přidány instrukce pro AI asistenta (`.github/instructions/`) — konvence architektury, DB vrstvy a GUI vrstvy
+- Implementován centrální logger (`src/utils/app_logger.py`) — zápis do `data/app.log` (rotující), konzole a GUI
+- Přidán `LogPanel` widget do spodní části `PlannerWindow` — live přehled akcí (4 řádky, read-only)
+- Veškerý `print()` nahrazen `logger.info/warning/error()` ve všech src souborech
 
-**Aktuální zaměření:** Aplikace je připravena na rozšíření o statistiky a analytiku.
+**Aktuální zaměření:** P1 — stabilita. Logger hotov. Zbývají: validace formulářů, potvrzovací dialogy, testy.
 
 ---
 
@@ -56,6 +59,7 @@ Nově (duben 2026):
 - ✅ NewProjectTaskDialog - formulář pro nový PROJECT_TASK
 - ✅ InputDialog - jednoduchý vstup textu
 - ✅ Responzivní design pro různá rozlišení (notebooky i velké monitory)
+- ✅ LogPanel - read-only log panel ve spodní části PlannerWindow (4 řádky, auto-scroll)
 
 **Soubory:**
 - [src/gui/user_selection_dialog.py](src/gui/user_selection_dialog.py)
@@ -64,12 +68,17 @@ Nově (duben 2026):
 - [src/gui/routine_dialog.py](src/gui/routine_dialog.py)
 - [src/gui/new_project_task_dialog.py](src/gui/new_project_task_dialog.py)
 - [src/gui/input_dialog.py](src/gui/input_dialog.py)
+- [src/gui/log_panel.py](src/gui/log_panel.py)
 
 ### **3. Pomocné scripty**
 - ✅ [scripts/test_database.py](scripts/test_database.py) - Test DB bez GUI
 - ✅ [scripts/seed_database.py](scripts/seed_database.py) - Naplnění testovacími daty
 
-### **4. Dokumentace & konvence**
+### **4. Infrastruktura — Logging**
+- ✅ `src/utils/app_logger.py` — singleton `get_logger()`, RotatingFileHandler, GUI dispatch
+- ✅ `data/app.log` — rotující log soubor (max 1 MB, 3 zálohy)
+
+### **5. Dokumentace & konvence**
 - ✅ [README.md](README.md) — přehled projektu, schéma DB, workflow
 - ✅ [QUICKSTART.md](QUICKSTART.md) — jak spustit, seed, ovládání
 - ✅ [PROJECT_CONFIG.md](PROJECT_CONFIG.md) — dev pravidla, příkazy
@@ -117,7 +126,7 @@ Nově (duben 2026):
 |---|------|-------|
 | P1-1 | Error handling formulářů | Validace vstupů v `NewProjectTaskDialog` — prázdná pole, duplicitní TMA |
 | P1-2 | Potvrzovací dialogy | "Opravdu chceš dokončit úkol?" před destruktivními akcemi |
-| P1-3 | Logging | `logging` modul místo `print()`, log do souboru v `data/app.log` |
+| ~~P1-3~~ | ~~Logging~~ | ✅ Hotovo — `src/utils/app_logger.py` + `LogPanel` v GUI + `data/app.log` |
 | P1-4 | Základní testy | `pytest` pro crud.py funkce — alespoň create, get, stop session |
 
 ### 🟡 Priorita 2 — Editace dat (uživatelský komfort)
