@@ -1,6 +1,6 @@
 # 📊 STAV PROJEKTU — measuring_capacity_app
 
-> Naposledy aktualizováno: 19.4.2026
+> Naposledy aktualizováno: 26.4.2026
 
 ---
 
@@ -18,7 +18,15 @@ Nově (duben 2026):
 - Toolbar v `PlannerWindow` — datum, jméno uživatele, tlačítko „Přepnout uživatele" bez restartu aplikace
 - Pytest testy pro `crud.py` — 16 testů, in-memory SQLite, 0 failures
 
-**Aktuální zaměření:** Priorita P1 dokončena. Zbývají P2–P4 backlog nebo další GUI vylepšení.
+Nově (26.4.2026):
+- `TaskCard` zobrazuje autora aktivity (`👤 Jméno`) přímo v záhlaví karty
+- Každá session v rozbalovacím seznamu ukazuje kdo ji trackoval (`👤 Jméno`)
+- Pravý panel v `PlannerWindow` má novou sekci „📋 Dnes zadáno" — live přehled dnešních rutin (typ, délka, čas, kdo zadal); obnovuje se po každé rutině i po zavření TrackingDialog
+- Opraveno řazení „Poslední fáze" v `TaskCard` — nyní vždy správně ukazuje časově nejnovější validní session (fix: `max(..., key=lambda s: s.start_time)`)
+- Opravena chyba `invalid command name` při startu — pending Tkinter `after()` callbacky se před `root.destroy()` explicitně ruší
+- Přidána `make_ctk_error_handler()` v `app_logger.py` — Tkinter error handler potlačující CTk interní šum, nasazen na `PlannerWindow.root`
+
+**Aktuální zaměření:** GUI detaily vyladěny. Zbývají P2–P4 backlog.
 
 ---
 
@@ -37,6 +45,7 @@ Nově (duben 2026):
   - Číselníky (Zadavatelé, Projekty, Důvody)
   - Multi-user podpora
   - Oddělené Zadavatel a Projekt entity
+- ✅ `get_today_routines(db)` — vrací dnešní ROUTINE aktivity seřazené od nejnovější
 
 **Soubory:**
 - [src/database/models.py](src/database/models.py) - DB modely s ENUMs
@@ -48,12 +57,14 @@ Nově (duben 2026):
 - ✅ UserSelectionDialog - výběr uživatele při startu
 - ✅ PlannerWindow - hlavní okno se 2 panely:
   - PROJECT_TASKS panel (80% šířky) s TaskCard widgety
-  - ROUTINES panel (20% šířky) s 9 quick-action tlačítky
+  - ROUTINES panel (20% šířky) s 9 quick-action tlačítky + sekce „📋 Dnes zadáno"
 - ✅ TaskCard s rámečky a rozbalovacím seznamem sessions:
   - Zobrazení validních i invalidních sessions
   - Ikony ✅/❌ podle validity
   - Důvod invalidace v závorce
-  - Poslední fáze v souhrnu
+  - Poslední fáze v souhrnu (dle `start_time` — vždy časově nejnovější)
+  - Autor aktivity (`👤 Jméno`) v záhlaví karty
+  - Kdo trackoval (`👤 Jméno`) u každé session v rozbalovacím seznamu
 - ✅ TrackingDialog - široké okno se 2 sloupci:
   - Levý sloupec: info, fáze, časovač, ovládání
   - Pravý sloupec: ROUTINES buttons (9 typů)
@@ -81,10 +92,12 @@ Nově (duben 2026):
 
 ### **4. Infrastruktura — Logging, dialogy, testy**
 - ✅ `src/utils/app_logger.py` — singleton `get_logger()`, RotatingFileHandler, GUI dispatch
+- ✅ `make_ctk_error_handler()` — Tkinter error handler potlačující CTk interní after() šum; nasazen na `PlannerWindow.root`
 - ✅ `data/app.log` — rotující log soubor (max 1 MB, 3 zálohy)
 - ✅ `src/gui/confirm_dialog.py` — znovupoužitelný `ConfirmDialog` (title, message, tlačítka, barvy)
 - ✅ `src/gui/log_panel.py` — `LogPanel` widget ve spodní části `PlannerWindow`
 - ✅ `tests/test_crud.py` — 16 pytest testů (User, Activity, TimeSession), in-memory SQLite
+- ✅ Fix: pending `after()` callbacky se ruší před `root.destroy()` v `main.py` — eliminace `invalid command name` Tkinter chyb při startu
 
 ### **5. Dokumentace & konvence**
 - ✅ [README.md](README.md) — přehled projektu, schéma DB, workflow

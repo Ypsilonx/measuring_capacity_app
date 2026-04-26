@@ -185,3 +185,33 @@ def get_valid_time_sessions_for_activity(db: Session, activity_id: int):
         models.TimeSession.activity_id == activity_id,
         models.TimeSession.is_valid == True
     ).all()
+
+
+def get_today_routines(db: Session):
+    """
+    Vrátí všechny ROUTINE aktivity vytvořené dnes, seřazené od nejnovější.
+
+    Používá se pro zobrazení dnešního přehledu rutin v pravém panelu PlannerWindow.
+
+    Args:
+        db: Databázová session
+
+    Returns:
+        Seznam Activity objektů (type=ROUTINE) vytvořených v dnešním dni
+    """
+    today_start = datetime.datetime.combine(
+        datetime.date.today(), datetime.time.min
+    )
+    today_end = datetime.datetime.combine(
+        datetime.date.today(), datetime.time.max
+    )
+    return (
+        db.query(models.Activity)
+        .filter(
+            models.Activity.type == models.ActivityType.ROUTINE,
+            models.Activity.created_at >= today_start,
+            models.Activity.created_at <= today_end,
+        )
+        .order_by(models.Activity.created_at.desc())
+        .all()
+    )

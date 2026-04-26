@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.database.database import init_db
 from src.gui.user_selection_dialog import UserSelectionDialog
 from src.gui.planner_window import PlannerWindow
-from src.utils.app_logger import get_logger
+from src.utils.app_logger import get_logger, make_ctk_error_handler
 
 logger = get_logger()
 
@@ -33,6 +33,9 @@ def main():
     root = ctk.CTk()
     root.withdraw()  # Skryj hlavní okno
 
+    # Potlač interní CTk after() šum při zavírání dialogů
+    root.report_callback_exception = make_ctk_error_handler()
+
     # Zobraz user selection dialog
     logger.info("Čekání na výběr uživatele...")
     user_dialog = UserSelectionDialog(root)
@@ -49,6 +52,19 @@ def main():
 
     # Spuštění hlavní aplikace s vybraným uživatelem
     logger.info("Spouštění plánovače...")
+
+    # Zruš všechny pending after() callbacky před destrukcí okna.
+    # CustomTkinter registruje interní callbacky (DPI scaling, animace...)
+    # přímo v Tcl event loop — ty nejsou vázány na widget, takže přežijí
+    # destroy() a způsobí "invalid command name" při prvním dalším
+    # zpracování event loop. Zrušení před destroy() je skutečná oprava.
+    try:
+        pending = root.tk.call("after", "info")
+        for after_id in str(pending).split():
+            root.after_cancel(after_id)
+    except Exception:
+        pass  # root může být v nekonzistentním stavu — bezpečně ignorujeme
+
     root.destroy()  # Zruš skryté okno
 
     app = PlannerWindow(selected_user)

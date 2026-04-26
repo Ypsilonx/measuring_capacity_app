@@ -133,3 +133,31 @@ def remove_gui_handler(callback) -> None:
     """
     if callback in _gui_callbacks:
         _gui_callbacks.remove(callback)
+
+
+def make_ctk_error_handler():
+    """
+    Vrátí error handler vhodný pro přiřazení do Tkinter root.report_callback_exception.
+
+    Potlačí známé neškodné 'invalid command name' chyby pocházející z interních
+    after() callbacků CustomTkinteru (DPI scaling, animace tlačítek, update smyčky).
+    Tyto vznikají při zavření dialogů dříve než CTk stihne zrušit naplánované
+    callbacky. Všechny ostatní výjimky jsou zalogovány jako ERROR.
+
+    Returns:
+        Callable vhodný pro root.report_callback_exception
+    """
+    _logger = get_logger()
+    _CTK_NOISE = ("check_dpi_scaling", "_click_animation", "update")
+
+    def _handler(exc, val, tb):
+        msg = str(val)
+        if exc is RuntimeError and "invalid command name" in msg:
+            if any(pattern in msg for pattern in _CTK_NOISE):
+                return  # interní CTk šum — tiše ignorovat
+        _logger.error(
+            f"Neočekávaná chyba v Tkinter callbacku: {val}",
+            exc_info=(exc, val, tb),
+        )
+
+    return _handler

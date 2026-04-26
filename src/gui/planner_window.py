@@ -17,7 +17,7 @@ from src.gui.routine_dialog import RoutineDialog
 from src.gui.confirm_dialog import ConfirmDialog
 from src.gui.log_panel import LogPanel
 from src.gui.user_selection_dialog import UserSelectionDialog
-from src.utils.app_logger import get_logger
+from src.utils.app_logger import get_logger, make_ctk_error_handler
 
 logger = get_logger()
 
@@ -38,6 +38,9 @@ class PlannerWindow:
         """
         self.root = ctk.CTk()
         self.root.title("Measuring Capacity App - Plánovač")
+
+        # Potlač interní CTk after() šum při zavírání dialogů
+        self.root.report_callback_exception = make_ctk_error_handler()
         
         # Responzivní velikost podle obrazovky
         screen_width = self.root.winfo_screenwidth()
@@ -192,7 +195,7 @@ class PlannerWindow:
         
         # Grid pro ROUTINES tlačítka
         routines_grid = ctk.CTkFrame(right_frame, fg_color="transparent")
-        routines_grid.pack(pady=20, padx=20, fill="both", expand=True)
+        routines_grid.pack(pady=(20, 10), padx=20, fill="x", expand=False)
         
         # Konfigurace gridu
         for i in range(3):
@@ -230,6 +233,23 @@ class PlannerWindow:
                 col = 0
                 row += 1
 
+        # === DNEŠNÍ RUTINY - přehled pod tlačítky ===
+        ctk.CTkFrame(right_frame, height=1, fg_color=("gray70", "gray35")).pack(
+            fill="x", padx=10, pady=(0, 6)
+        )
+        ctk.CTkLabel(
+            right_frame,
+            text="📋 Dnes zadáno",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        ).pack(anchor="w", padx=12, pady=(0, 4))
+
+        self.routines_today_frame = ctk.CTkScrollableFrame(
+            right_frame,
+            height=160,
+            fg_color=("gray88", "gray17"),
+        )
+        self.routines_today_frame.pack(fill="x", expand=False, padx=10, pady=(0, 8))
+
         # === LOG PANEL - spodní pruh přes celou šířku ===
         log_panel = LogPanel(
             self.root,
@@ -242,7 +262,71 @@ class PlannerWindow:
     def _load_data(self):
         """Načte data z databáze."""
         self._refresh_tasks()
+        self._refresh_routines_today()
     
+    def _refresh_routines_today(self):
+        """
+        Obnoví seznam dnešních ROUTINE aktivit v pravém panelu.
+
+        Načte z DB všechny dnešní rutiny a zobrazí je jako kompaktní řádky
+        (emoji + typ + čas + kdo zadal) od nejnovější.
+        """
+        # Vyčisti starý obsah
+        for widget in self.routines_today_frame.winfo_children():
+            widget.destroy()
+
+        routines = crud.get_today_routines(self.db)
+
+        if not routines:
+            ctk.CTkLabel(
+                self.routines_today_frame,
+                text="Dnes zatím žádné rutiny",
+                font=ctk.CTkFont(size=11),
+                text_color=("gray50", "gray60"),
+            ).pack(anchor="w", padx=8, pady=6)
+            return
+
+        # Mapování RoutineType → emoji
+        _ROUTINE_EMOJI = {
+            models.RoutineType.OBED: "🍽️",
+            models.RoutineType.KAVA: "☕",
+            models.RoutineType.KOURENI: "🚬",
+            models.RoutineType.WC: "🚽",
+            models.RoutineType.PRESTAVKA: "⏸️",
+            models.RoutineType.MEETING: "👥",
+            models.RoutineType.PORADA: "📊",
+            models.RoutineType.PROGRAMOVANI: "💻",
+            models.RoutineType.VLASTNI: "✏️",
+        }
+
+        for routine in routines:
+            emoji = _ROUTINE_EMOJI.get(routine.routine_type, "•")
+            type_name = routine.routine_type.value if routine.routine_type else routine.name or "?"
+            duration = routine.routine_duration_minutes or 0
+            created_time = routine.created_at.strftime("%H:%M") if routine.created_at else "?"
+            creator_name = routine.creator.full_name if routine.creator else "?"
+
+            row_frame = ctk.CTkFrame(
+                self.routines_today_frame,
+                fg_color="transparent",
+            )
+            row_frame.pack(fill="x", padx=4, pady=1)
+
+            ctk.CTkLabel(
+                row_frame,
+                text=f"{emoji} {type_name} — {duration} min",
+                font=ctk.CTkFont(size=11),
+                anchor="w",
+            ).pack(side="left", padx=(4, 0))
+
+            ctk.CTkLabel(
+                row_frame,
+                text=f"{created_time} · {creator_name}",
+                font=ctk.CTkFont(size=10),
+                text_color=("gray50", "gray60"),
+                anchor="e",
+            ).pack(side="right", padx=(0, 4))
+
     def _refresh_tasks(self):
         """Obnoví seznam nedokončených úkolů."""
         
@@ -292,7 +376,8 @@ class PlannerWindow:
         """
         dialog = RoutineDialog(self.root, self, config)
         self.root.wait_window(dialog)
-    
+        self._refresh_routines_today()
+
     def open_tracking(self, activity):
         """
         Otevře tracking dialog pro aktivitu.
@@ -302,7 +387,8 @@ class PlannerWindow:
         """
         dialog = TrackingDialog(self.root, self, activity)
         self.root.wait_window(dialog)
-        self._refresh_tasks()  # Refresh po zavření
+        self._refresh_tasks()
+        self._refresh_routines_today()  # Zahrne rutiny zadané z TrackingDialog
     
     def complete_activity(self, activity_id):
         """Označí aktivitu jako dokončenou."""
@@ -375,14 +461,29 @@ class TaskCard(ctk.CTkFrame):
         # Grid layout
         self.grid_columnconfigure(0, weight=1)
         
-        # TMA
+        # Hlavička — TMA + zadal uživatel
+        header_row = ctk.CTkFrame(self, fg_color="transparent")
+        header_row.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 5))
+        header_row.grid_columnconfigure(0, weight=1)
+
         tma_label = ctk.CTkLabel(
-            self,
+            header_row,
             text=f"🏷️ {self.activity.tma_cislo or 'N/A'}",
             font=ctk.CTkFont(size=14, weight="bold"),
             anchor="w"
         )
-        tma_label.grid(row=0, column=0, sticky="w", padx=12, pady=(12, 5))
+        tma_label.grid(row=0, column=0, sticky="w")
+
+        # Kdo aktivitu zadal do systému (creator)
+        creator_name = self.activity.creator.full_name if self.activity.creator else "?"
+        creator_label = ctk.CTkLabel(
+            header_row,
+            text=f"👤 {creator_name}",
+            font=ctk.CTkFont(size=10),
+            text_color=("gray50", "gray60"),
+            anchor="e"
+        )
+        creator_label.grid(row=0, column=1, sticky="e", padx=(10, 0))
         
         # Název testu
         if self.activity.nazev_testu:
@@ -406,11 +507,11 @@ class TaskCard(ctk.CTkFrame):
         total_time = sum(s.duration_minutes or 0 for s in valid_sessions)
         hours = total_time // 60
         minutes = total_time % 60
-        
-        # Poslední fáze (z validních)
+
+        # Poslední fáze — nejnovější validní session dle start_time
         last_phase = ""
         if valid_sessions:
-            last_session = valid_sessions[-1]
+            last_session = max(valid_sessions, key=lambda s: s.start_time or 0)
             if last_session.phase:
                 last_phase = f" | Poslední: {last_session.phase.value}"
         
@@ -492,7 +593,8 @@ class TaskCard(ctk.CTkFrame):
                     phase_text = session.phase.value if session.phase else "N/A"
                     duration = session.duration_minutes or 0
                     start_time = session.start_time.strftime("%H:%M") if session.start_time else "N/A"
-                    
+                    user_name = session.user.full_name if session.user else "?"
+
                     # Rozlišení validní/invalidní
                     if session.is_valid:
                         status_icon = "✅"
@@ -503,15 +605,25 @@ class TaskCard(ctk.CTkFrame):
                         # Přidej důvod invalidace
                         if session.invalidation_reason:
                             phase_text += f" ({session.invalidation_reason})"
-                    
-                    session_label = ctk.CTkLabel(
-                        self.sessions_frame,
-                        text=f"  {status_icon} {i+1}. {start_time} - {phase_text} - {duration} min",
+
+                    row_frame = ctk.CTkFrame(self.sessions_frame, fg_color="transparent")
+                    row_frame.pack(fill="x", padx=4, pady=1)
+
+                    ctk.CTkLabel(
+                        row_frame,
+                        text=f"  {status_icon} {i+1}. {start_time} · {phase_text} · {duration} min",
                         font=ctk.CTkFont(size=9),
                         text_color=text_color,
-                        anchor="w"
-                    )
-                    session_label.pack(anchor="w", padx=8, pady=2)
+                        anchor="w",
+                    ).pack(side="left")
+
+                    ctk.CTkLabel(
+                        row_frame,
+                        text=f"👤 {user_name}",
+                        font=ctk.CTkFont(size=9),
+                        text_color=("gray50", "gray60"),
+                        anchor="e",
+                    ).pack(side="right", padx=(0, 8))
     
     def _on_tracking(self):
         """Handler pro tlačítko Tracking."""

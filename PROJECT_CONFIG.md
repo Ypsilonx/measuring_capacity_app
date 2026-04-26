@@ -59,6 +59,10 @@
 - [x] P1-2 Potvrzovací dialogy — `ConfirmDialog`
 - [x] P1-4 Pytest testy — `tests/test_crud.py`, 16 testů
 - [x] GUI-1 Toolbar — datum, uživatel, přepínání uživatele za běhu
+- [x] GUI-2 Autor v TaskCard — `👤` v záhlaví karty + u každé session
+- [x] GUI-3 Panel „📋 Dnes zadáno" — dnešní rutiny v pravém panelu, refresh po každé akci i po TrackingDialog
+- [x] FIX — řazení „Poslední fáze" dle `start_time` (ne pořadí v listu)
+- [x] FIX — `invalid command name` CTk šum odstraněn (`make_ctk_error_handler` + zrušení pending callbacků před `root.destroy()`)
 - [ ] P2–P4 viz MVP_STATUS.md backlog
 
 ## Kde najdeš co
