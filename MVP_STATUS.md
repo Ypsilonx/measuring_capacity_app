@@ -1,6 +1,6 @@
 # 📊 STAV PROJEKTU — measuring_capacity_app
 
-> Naposledy aktualizováno: 26.4.2026
+> Naposledy aktualizováno: 27.4.2026
 
 ---
 
@@ -18,7 +18,17 @@ Nově (duben 2026):
 - Toolbar v `PlannerWindow` — datum, jméno uživatele, tlačítko „Přepnout uživatele" bez restartu aplikace
 - Pytest testy pro `crud.py` — 16 testů, in-memory SQLite, 0 failures
 
-Nově (26.4.2026):
+Nově (27.4.2026):
+- Implementovány P2 funkce (editace dat):
+  - `crud.delete_time_session()` — smazání konkrétní session
+  - `crud.delete_activity()` — smazání aktivity + cascade sessions
+  - `crud.update_time_session_notes()` — editace poznámek session
+  - `crud.update_activity()` — editace metadat PROJECT_TASK
+  - `EditActivityDialog` (nový soubor) — předvyplněný formulář pro editaci aktivity
+  - `InputDialog` rozšířen o parametr `initial_value` (předvyplnění) a opraven prázdný výsledek pro `required=False`
+  - `TaskCard` v `PlannerWindow` — přidána tlačítka ✏️ Editovat + 🗑️ Smazat pro aktivitu
+  - `TaskCard` sessions seznam — přidána tlačítka ✏️ (editace poznámek) + 🗑️ (smazání) u každé session
+- Pytest testy rozšířeny na 26 (přidáno 10 testů pro P2 funkce), 0 failures
 - `TaskCard` zobrazuje autora aktivity (`👤 Jméno`) přímo v záhlaví karty
 - Každá session v rozbalovacím seznamu ukazuje kdo ji trackoval (`👤 Jméno`)
 - Pravý panel v `PlannerWindow` má novou sekci „📋 Dnes zadáno" — live přehled dnešních rutin (typ, délka, čas, kdo zadal); obnovuje se po každé rutině i po zavření TrackingDialog
@@ -26,7 +36,7 @@ Nově (26.4.2026):
 - Opravena chyba `invalid command name` při startu — pending Tkinter `after()` callbacky se před `root.destroy()` explicitně ruší
 - Přidána `make_ctk_error_handler()` v `app_logger.py` — Tkinter error handler potlačující CTk interní šum, nasazen na `PlannerWindow.root`
 
-**Aktuální zaměření:** GUI detaily vyladěny. Zbývají P2–P4 backlog.
+**Aktuální zaměření:** P2 editace hotová. Zbývají P3 (statistiky) a P4 (pokročilé).
 
 ---
 
@@ -96,7 +106,8 @@ Nově (26.4.2026):
 - ✅ `data/app.log` — rotující log soubor (max 1 MB, 3 zálohy)
 - ✅ `src/gui/confirm_dialog.py` — znovupoužitelný `ConfirmDialog` (title, message, tlačítka, barvy)
 - ✅ `src/gui/log_panel.py` — `LogPanel` widget ve spodní části `PlannerWindow`
-- ✅ `tests/test_crud.py` — 16 pytest testů (User, Activity, TimeSession), in-memory SQLite
+- ✅ `src/gui/edit_activity_dialog.py` — `EditActivityDialog` — editace metadat PROJECT_TASK (předvyplněný formulář)
+- ✅ `tests/test_crud.py` — 26 pytest testů (User, Activity, TimeSession, P2 delete/update), 0 failures
 - ✅ Fix: pending `after()` callbacky se ruší před `root.destroy()` v `main.py` — eliminace `invalid command name` Tkinter chyb při startu
 
 ### **5. Dokumentace & konvence**
@@ -155,10 +166,10 @@ Nově (26.4.2026):
 
 | # | Úkol | Popis |
 |---|------|-------|
-| P2-1 | Editace aktivity | Možnost změnit metadata PROJECT_TASK po vytvoření |
-| P2-2 | Editace poznámek session | Přidat/změnit `notes` u existující TimeSession |
-| P2-3 | Mazání session | Smazat chybnou session (s potvrzením) |
-| P2-4 | Mazání aktivity | Archivace nebo smazání celé aktivity |
+| ~~P2-1~~ | ~~Editace aktivity~~ | ✅ Hotovo — `EditActivityDialog` + `crud.update_activity()` |
+| ~~P2-2~~ | ~~Editace poznámek session~~ | ✅ Hotovo — `InputDialog` s `initial_value` + `crud.update_time_session_notes()` |
+| ~~P2-3~~ | ~~Mazání session~~ | ✅ Hotovo — `crud.delete_time_session()` + tlačítko 🗑️ v TaskCard sessions |
+| ~~P2-4~~ | ~~Mazání aktivity~~ | ✅ Hotovo — `crud.delete_activity()` (cascade) + tlačítko 🗑️ Smazat v TaskCard |
 
 ### 🟢 Priorita 3 — Statistiky a analytika (hlavní přidaná hodnota)
 
@@ -187,13 +198,13 @@ Nově (26.4.2026):
 ## 📈 STATISTIKY KÓDU (duben 2026)
 
 ```
-Celkem řádků:   ~2200 LOC
-Python soubory: 13 souborů src/ + 2 skripty + 1 test
-GUI komponenty: 10 souborů (gui/)
-DB operace:     ~25 CRUD funkcí
+Celkem řádků:   ~2600 LOC
+Python soubory: 14 souborů src/ + 2 skripty + 1 test
+GUI komponenty: 11 souborů (gui/) — nově edit_activity_dialog.py
+DB operace:     ~29 CRUD funkcí (nové: delete_session, delete_activity, update_notes, update_activity)
 Tabulky DB:     8 (users, activities, time_sessions + 5 číselníků)
 Instrukce AI:   3 soubory .github/instructions/
-Pytest testy:   16 (tests/test_crud.py)
+Pytest testy:   26 (tests/test_crud.py) — nově 10 P2 testů
 ```
 
 ---

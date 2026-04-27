@@ -199,3 +199,86 @@ class TestTimeSession:
         crud.start_time_session(db, user_id=user.id, activity_id=project_task.id)
         sessions = crud.get_time_sessions_for_activity(db, project_task.id)
         assert len(sessions) == 2
+
+
+# ---------------------------------------------------------------------------
+# P2 — CRUD testy pro editaci a mazání (P2-1 až P2-4)
+# ---------------------------------------------------------------------------
+
+class TestDeleteAndUpdate:
+    """Testy pro nové P2 funkce: delete_time_session, delete_activity,
+    update_time_session_notes, update_activity."""
+
+    def test_delete_time_session_existujici(self, db, user, project_task):
+        """Smazání existující session vrátí True a session zmizí z DB."""
+        session = crud.start_time_session(db, user_id=user.id, activity_id=project_task.id)
+        result = crud.delete_time_session(db, session.id)
+        assert result is True
+        sessions_after = crud.get_time_sessions_for_activity(db, project_task.id)
+        assert len(sessions_after) == 0
+
+    def test_delete_time_session_neexistujici(self, db):
+        """Smazání neexistující session vrátí False."""
+        result = crud.delete_time_session(db, 999)
+        assert result is False
+
+    def test_delete_activity_existujici(self, db, user, project_task):
+        """Smazání aktivity vrátí True a aktivita zmizí z DB."""
+        activity_id = project_task.id
+        # Přidáme session — musí být smazána spolu s aktivitou (cascade)
+        crud.start_time_session(db, user_id=user.id, activity_id=activity_id)
+        result = crud.delete_activity(db, activity_id)
+        assert result is True
+        assert crud.get_activity(db, activity_id) is None
+
+    def test_delete_activity_cascade_sessions(self, db, user, project_task):
+        """Sessions jsou smazány spolu s aktivitou (cascade delete)."""
+        session = crud.start_time_session(db, user_id=user.id, activity_id=project_task.id)
+        session_id = session.id
+        crud.delete_activity(db, project_task.id)
+        # Session nesmí existovat
+        from src.database.models import TimeSession
+        from sqlalchemy.orm import Session as SASession
+        result = db.query(TimeSession).filter(TimeSession.id == session_id).first()
+        assert result is None
+
+    def test_delete_activity_neexistujici(self, db):
+        """Smazání neexistující aktivity vrátí False."""
+        result = crud.delete_activity(db, 999)
+        assert result is False
+
+    def test_update_time_session_notes(self, db, user, project_task):
+        """Aktualizace poznámek session uloží nový text."""
+        session = crud.start_time_session(db, user_id=user.id, activity_id=project_task.id)
+        updated = crud.update_time_session_notes(db, session.id, "Nová poznámka")
+        assert updated is not None
+        assert updated.notes == "Nová poznámka"
+
+    def test_update_time_session_notes_prazdne(self, db, user, project_task):
+        """Předání prázdného řetězce nastaví notes na None (vymazání)."""
+        session = crud.start_time_session(db, user_id=user.id, activity_id=project_task.id,
+                                          notes="Stará poznámka")
+        updated = crud.update_time_session_notes(db, session.id, "")
+        assert updated.notes is None
+
+    def test_update_time_session_notes_neexistujici(self, db):
+        """Aktualizace neexistující session vrátí None."""
+        result = crud.update_time_session_notes(db, 999, "Text")
+        assert result is None
+
+    def test_update_activity_metadata(self, db, user, project_task):
+        """update_activity změní vybraná pole aktivity."""
+        updated = crud.update_activity(
+            db,
+            project_task.id,
+            tma_cislo="TMA-EDIT",
+            nazev_testu="Editovaný název",
+        )
+        assert updated is not None
+        assert updated.tma_cislo == "TMA-EDIT"
+        assert updated.nazev_testu == "Editovaný název"
+
+    def test_update_activity_neexistujici(self, db):
+        """Aktualizace neexistující aktivity vrátí None."""
+        result = crud.update_activity(db, 999, tma_cislo="X")
+        assert result is None

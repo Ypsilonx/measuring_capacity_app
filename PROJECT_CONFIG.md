@@ -63,7 +63,11 @@
 - [x] GUI-3 Panel „📋 Dnes zadáno" — dnešní rutiny v pravém panelu, refresh po každé akci i po TrackingDialog
 - [x] FIX — řazení „Poslední fáze" dle `start_time` (ne pořadí v listu)
 - [x] FIX — `invalid command name` CTk šum odstraněn (`make_ctk_error_handler` + zrušení pending callbacků před `root.destroy()`)
-- [ ] P2–P4 viz MVP_STATUS.md backlog
+- [x] P2-1 Editace aktivity — `EditActivityDialog` + `crud.update_activity()`
+- [x] P2-2 Editace poznámek session — `InputDialog` initial_value + `crud.update_time_session_notes()`
+- [x] P2-3 Mazání session — `crud.delete_time_session()` + tlačítko v TaskCard
+- [x] P2-4 Mazání aktivity — `crud.delete_activity()` (cascade) + tlačítko v TaskCard
+- [ ] P3–P4 viz MVP_STATUS.md backlog
 
 ## Kde najdeš co
 

@@ -8,7 +8,7 @@ import customtkinter as ctk
 class InputDialog(ctk.CTkToplevel):
     """Dialog pro zadání textového vstupu."""
     
-    def __init__(self, parent, title="Vstup", prompt="Zadejte hodnotu:", required=True):
+    def __init__(self, parent, title="Vstup", prompt="Zadejte hodnotu:", required=True, initial_value: str = ""):
         """
         Inicializace dialogu.
         
@@ -17,11 +17,13 @@ class InputDialog(ctk.CTkToplevel):
             title: Nadpis okna
             prompt: Text výzvy
             required: Zda je vstup povinný
+            initial_value: Výchozí text předvyplněný v poli (prázdný řetězec = nic)
         """
         super().__init__(parent)
         
         self.result = None
         self.required = required
+        self._initial_value = initial_value
         
         # Nastavení okna
         self.title(title)
@@ -43,7 +45,7 @@ class InputDialog(ctk.CTkToplevel):
         
         self._create_widgets(prompt)
     
-    def _create_widgets(self, prompt):
+    def _create_widgets(self, prompt: str):
         """Vytvoří GUI komponenty."""
         
         # Hlavní frame
@@ -66,6 +68,8 @@ class InputDialog(ctk.CTkToplevel):
             height=35
         )
         self.entry.pack(pady=10)
+        if self._initial_value:
+            self.entry.insert(0, self._initial_value)
         self.entry.focus()
         
         # Tlačítka
@@ -104,7 +108,9 @@ class InputDialog(ctk.CTkToplevel):
             self.entry.configure(border_color="red")
             return
         
-        self.result = value if value else None
+        # Pro nepovinné pole prázdný řetězec ukládáme jako "" — ne None.
+        # None rezervujeme výhradně pro Cancel (uživatel dialog zavřel).
+        self.result = value if value else (None if self.required else "")
         self.grab_release()
         self.destroy()
     

@@ -215,3 +215,87 @@ def get_today_routines(db: Session):
         .order_by(models.Activity.created_at.desc())
         .all()
     )
+
+
+def delete_time_session(db: Session, session_id: int) -> bool:
+    """
+    Smaže TimeSession ze záznamu.
+
+    Args:
+        db: Databázová session
+        session_id: ID session k smazání
+
+    Returns:
+        True pokud byla session nalezena a smazána, False pokud neexistuje
+    """
+    db_session = db.query(models.TimeSession).filter(models.TimeSession.id == session_id).first()
+    if db_session is None:
+        return False
+    db.delete(db_session)
+    db.commit()
+    return True
+
+
+def delete_activity(db: Session, activity_id: int) -> bool:
+    """
+    Smaže aktivitu a všechny její TimeSession záznamy (cascade delete).
+
+    Args:
+        db: Databázová session
+        activity_id: ID aktivity k smazání
+
+    Returns:
+        True pokud byla aktivita nalezena a smazána, False pokud neexistuje
+    """
+    db_activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+    if db_activity is None:
+        return False
+    db.delete(db_activity)
+    db.commit()
+    return True
+
+
+def update_time_session_notes(db: Session, session_id: int, notes: str) -> models.TimeSession | None:
+    """
+    Aktualizuje poznámkové pole existující TimeSession.
+
+    Args:
+        db: Databázová session
+        session_id: ID session k aktualizaci
+        notes: Nový text poznámek (může být prázdný řetězec pro vymazání)
+
+    Returns:
+        Aktualizovaný TimeSession objekt, nebo None pokud neexistuje
+    """
+    db_session = db.query(models.TimeSession).filter(models.TimeSession.id == session_id).first()
+    if db_session is None:
+        return None
+    db_session.notes = notes if notes else None
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+def update_activity(db: Session, activity_id: int, **fields) -> models.Activity | None:
+    """
+    Aktualizuje metadata aktivity (libovolná pole modelu Activity).
+
+    Používá se pro editaci PROJECT_TASK po vytvoření.
+    Předané kwargs musí odpovídat názvům sloupců v modelu Activity.
+
+    Args:
+        db: Databázová session
+        activity_id: ID aktivity k aktualizaci
+        **fields: Pole k aktualizaci ve formě klíč=hodnota
+
+    Returns:
+        Aktualizovaný Activity objekt, nebo None pokud neexistuje
+    """
+    db_activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+    if db_activity is None:
+        return None
+    for key, value in fields.items():
+        setattr(db_activity, key, value)
+    db.commit()
+    db.refresh(db_activity)
+    return db_activity

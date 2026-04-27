@@ -17,6 +17,8 @@ from src.gui.routine_dialog import RoutineDialog
 from src.gui.confirm_dialog import ConfirmDialog
 from src.gui.log_panel import LogPanel
 from src.gui.user_selection_dialog import UserSelectionDialog
+from src.gui.input_dialog import InputDialog
+from src.gui.edit_activity_dialog import EditActivityDialog
 from src.utils.app_logger import get_logger, make_ctk_error_handler
 
 logger = get_logger()
@@ -561,7 +563,7 @@ class TaskCard(ctk.CTkFrame):
             fg_color="blue",
             hover_color="darkblue"
         )
-        tracking_btn.grid(row=0, column=0, padx=(0, 5), sticky="ew")
+        tracking_btn.grid(row=0, column=0, padx=(0, 5), pady=(0, 4), sticky="ew")
         
         complete_btn = ctk.CTkButton(
             btn_frame,
@@ -572,7 +574,30 @@ class TaskCard(ctk.CTkFrame):
             fg_color="green",
             hover_color="darkgreen"
         )
-        complete_btn.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+        complete_btn.grid(row=0, column=1, padx=(5, 0), pady=(0, 4), sticky="ew")
+
+        edit_btn = ctk.CTkButton(
+            btn_frame,
+            text="✏️ Editovat",
+            command=self._on_edit_activity,
+            height=30,
+            font=ctk.CTkFont(size=11),
+            fg_color=("gray65", "gray30"),
+            hover_color=("gray55", "gray40"),
+        )
+        edit_btn.grid(row=1, column=0, padx=(0, 5), sticky="ew")
+
+        delete_btn = ctk.CTkButton(
+            btn_frame,
+            text="🗑️ Smazat",
+            command=self._on_delete_activity,
+            height=30,
+            font=ctk.CTkFont(size=11),
+            fg_color=("gray65", "gray30"),
+            hover_color=("red", "darkred"),
+            text_color=("gray20", "gray90"),
+        )
+        delete_btn.grid(row=1, column=1, padx=(5, 0), sticky="ew")
     
     def _toggle_sessions(self):
         """Rozbalí/sbalí seznam sessions."""
@@ -617,6 +642,33 @@ class TaskCard(ctk.CTkFrame):
                         anchor="w",
                     ).pack(side="left")
 
+                    # Akční tlačítka — vpravo od záznamu
+                    # 🗑️ Smazat session
+                    ctk.CTkButton(
+                        row_frame,
+                        text="🗑️",
+                        command=lambda sid=session.id: self._on_delete_session(sid),
+                        width=26,
+                        height=20,
+                        font=ctk.CTkFont(size=10),
+                        fg_color=("gray70", "gray30"),
+                        hover_color=("red", "darkred"),
+                        corner_radius=4,
+                    ).pack(side="right", padx=(2, 4))
+
+                    # ✏️ Editovat poznámky session
+                    ctk.CTkButton(
+                        row_frame,
+                        text="✏️",
+                        command=lambda sid=session.id, n=session.notes: self._on_edit_session_notes(sid, n),
+                        width=26,
+                        height=20,
+                        font=ctk.CTkFont(size=10),
+                        fg_color=("gray70", "gray30"),
+                        hover_color=("gray55", "gray45"),
+                        corner_radius=4,
+                    ).pack(side="right", padx=(0, 2))
+
                     ctk.CTkLabel(
                         row_frame,
                         text=f"👤 {user_name}",
@@ -648,3 +700,86 @@ class TaskCard(ctk.CTkFrame):
         self.planner.root.wait_window(dialog)
         if dialog.confirmed:
             self.planner.complete_activity(self.activity.id)
+
+    def _on_edit_activity(self):
+        """Handler pro tlačítko Editovat — otevře dialog pro úpravu metadat aktivity."""
+        dialog = EditActivityDialog(self.planner.root, self.planner, self.activity)
+        self.planner.root.wait_window(dialog)
+        self.planner._refresh_tasks()
+
+    def _on_delete_activity(self):
+        """Handler pro tlačítko Smazat — smaže aktivitu i všechny její sessions po potvrzení."""
+        tma = self.activity.tma_cislo or f"ID={self.activity.id}"
+        session_count = len(crud.get_time_sessions_for_activity(self.planner.db, self.activity.id))
+        session_text = (
+            f"Spolu s ní bude smazáno {session_count} session(s).\n\n" if session_count else ""
+        )
+        dialog = ConfirmDialog(
+            self.planner.root,
+            title="Smazat aktivitu",
+            message=(
+                f"Opravdu chceš smazat tuto aktivitu?\n\n"
+                f"TMA: {tma}\n"
+                f"{self.activity.nazev_testu or ''}\n\n"
+                f"{session_text}"
+                f"⚠️ Akce je nevratná."
+            ),
+            confirm_text="🗑️ Smazat",
+            confirm_color="red",
+            confirm_hover="darkred",
+        )
+        self.planner.root.wait_window(dialog)
+        if dialog.confirmed:
+            deleted = crud.delete_activity(self.planner.db, self.activity.id)
+            if deleted:
+                logger.info(f"Aktivita ID={self.activity.id} (TMA={tma}) smazána")
+                self.planner._refresh_tasks()
+
+    def _on_delete_session(self, session_id: int):
+        """
+        Handler pro smazání konkrétní session.
+
+        Zobrazí potvrzovací dialog, po souhlasu session smaže a obnoví seznam karet.
+
+        Args:
+            session_id: ID TimeSession k smazání
+        """
+        dialog = ConfirmDialog(
+            self.planner.root,
+            title="Smazat session",
+            message=(
+                "Opravdu chceš smazat tuto session?\n\n"
+                "⚠️ Akce je nevratná."
+            ),
+            confirm_text="🗑️ Smazat",
+            confirm_color="red",
+            confirm_hover="darkred",
+        )
+        self.planner.root.wait_window(dialog)
+        if dialog.confirmed:
+            deleted = crud.delete_time_session(self.planner.db, session_id)
+            if deleted:
+                logger.info(f"Session ID={session_id} smazána z aktivity ID={self.activity.id}")
+                self.planner._refresh_tasks()
+
+    def _on_edit_session_notes(self, session_id: int, current_notes: str | None):
+        """
+        Handler pro editaci poznámek session přes InputDialog.
+
+        Args:
+            session_id: ID TimeSession k aktualizaci
+            current_notes: Aktuální text poznámek (None pokud žádné)
+        """
+        dialog = InputDialog(
+            self.planner.root,
+            title="Editovat poznámky session",
+            prompt="Poznámky k session (nechej prázdné pro vymazání):",
+            required=False,
+            initial_value=current_notes or "",
+        )
+        self.planner.root.wait_window(dialog)
+        # result je None = cancel, "" nebo text = submit
+        if dialog.result is not None:
+            crud.update_time_session_notes(self.planner.db, session_id, dialog.result)
+            logger.info(f"Session ID={session_id} — poznámky aktualizovány")
+            self.planner._refresh_tasks()
