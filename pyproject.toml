@@ -1,0 +1,28 @@
+[project]
+name = "measuring-capacity-app"
+version = "0.1.0"
+description = "Desktop aplikace pro tracking času nad pracovními úkoly s predikcí na základě historických dat."
+requires-python = ">=3.13"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "customtkinter>=5.2.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "plotly>=5.14.0",
+    "python-dateutil>=2.8.0",
+    "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

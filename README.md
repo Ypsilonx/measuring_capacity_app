@@ -17,8 +17,10 @@ measuring_capacity_app/
 │   ├── core/          # Business logika
 │   └── utils/         # Pomocné funkce
 ├── tests/             # Testy
-├── venv/              # Virtual environment
-└── requirements.txt
+├── .python-version    # Fixace verze Pythonu pro UV
+├── pyproject.toml     # Definice projektu a závislostí
+├── uv.lock            # Lockfile – commitovat do gitu
+└── requirements.txt   # Exportovaný artefakt pro pip uživatele
 ```
 
 ## Koncept aplikace
@@ -158,19 +160,25 @@ measuring_capacity_app/
 
 ## Instalace
 
-### 1. Vytvoření virtuálního prostředí
-```bash
-python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows PowerShell
+### Varianta A – UV (doporučeno)
+
+```powershell
+# Instalace UV (pokud ještě není)
+pip install uv
+
+# Vytvoření prostředí a instalace závislostí
+uv sync
 ```
 
-### 2. Instalace Python závislostí
-```bash
-.\venv\Scripts\Activate.ps1
+### Varianta B – pip (alternativa)
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-### 3. Konfigurace databáze
+### Konfigurace databáze
 Zkopírovat `.env.example` na `.env`:
 ```bash
 copy .env.example .env
@@ -184,8 +192,12 @@ Pro SQLite (default) není potřeba nic měnit - databáze se vytvoří automati
 - Upravit `.env`: nastavit DB_TYPE=postgresql a vyplnit credentials
 
 ## Spuštění
-```bash
-.\venv\Scripts\Activate.ps1
+
+```powershell
+# UV (doporučeno)
+uv run python src/main.py
+
+# pip / aktivované venv
 python src/main.py
 ```
 

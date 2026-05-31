@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 venv/
+.venv/
 env/
 ENV/
 *.egg-info/
@@ -12,7 +13,6 @@ dist/
 build/
 
 # IDEs
-.vscode/
 .idea/
 *.swp
 *.swo
